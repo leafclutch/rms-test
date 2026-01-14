@@ -7,7 +7,10 @@ const router = express.Router();
 
 
 
-router.post('/login', loginUser);
+import { validate } from '../middleware/validate.middleware.js';
+import { loginSchema } from '../validators/auth.validator.js';
+
+router.post('/login', validate(loginSchema), loginUser);
 router.post('/logout', logoutUser);
 
 export default router;
