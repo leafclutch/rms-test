@@ -29,7 +29,6 @@ export const generateQRService = async ({ tableCode }: { tableCode: string }) =>
     const qrData = `${frontendUrl}/menu?table=${table.tableCode}`;
 
     // Generate QR Code File
-    // We save it to 'public/qrcodes/[tableCode].png'
     const qrFileName = `${table.tableCode}.png`;
     const qrDir = path.join(process.cwd(), 'public', 'qrcodes');
     const qrFilePath = path.join(qrDir, qrFileName);
@@ -43,7 +42,6 @@ export const generateQRService = async ({ tableCode }: { tableCode: string }) =>
     await QRCode.toFile(qrFilePath, qrData);
 
     // URL to access the file
-    // Assumes server is running on same host, client constructs full URL or we return relative
     const qrImage = `/public/qrcodes/${qrFileName}`;
 
     return {
@@ -52,8 +50,8 @@ export const generateQRService = async ({ tableCode }: { tableCode: string }) =>
             id: table.id,
             tableCode: table.tableCode,
             qrToken: table.qrToken,
-            qrCodeData: qrData, // Frontend can use this to generate QR
-            qrImage, // URL to static image
+            qrCodeData: qrData,
+            qrImage,
         },
     };
 };
@@ -73,4 +71,25 @@ export const getTableInfoService = async (tableCode: string) => {
     return {
         table,
     };
+};
+
+export const initVirtualTableService = async (data: { type: 'NAME_BASED' | 'ONLINE'; identifier: string }) => {
+    const { type, identifier } = data;
+    if (!identifier) throw new AppError('Identifier (Name or Mobile) is required', 400);
+
+    let table = await prisma.table.findUnique({
+        where: { tableCode: identifier },
+    });
+
+    if (!table) {
+        table = await prisma.table.create({
+            data: {
+                tableCode: identifier,
+                tableType: type,
+                qrToken: uuidv4(),
+            },
+        });
+    }
+
+    return { table };
 };
