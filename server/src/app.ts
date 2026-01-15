@@ -4,7 +4,7 @@ import authRoutes from './routes/auth.router.ts';
 import tableRoutes from './routes/table.router.ts';
 import menuRoutes from './routes/menu.router.ts';
 import orderRoutes from './routes/order.router.ts';
-import adminRoutes from './routes/admin.router.ts';
+import adminRoutes from './routes/adminOrder.router.ts';
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/public', express.static('public'));
