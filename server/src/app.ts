@@ -1,16 +1,17 @@
 import express from "express";
 const app = express();
-import authRoutes from './routes/auth.router.js';
-import tableRoutes from './routes/table.routes.js';
-import orderRoutes from './routes/order.routes.js';
-import adminRoutes from './routes/admin.routes.js';
-
+import authRoutes from './routes/auth.router.ts';
+import tableRoutes from './routes/table.router.ts';
+import menuRoutes from './routes/menu.router.ts';
+import orderRoutes from './routes/order.router.ts';
+import adminRoutes from './routes/admin.router.ts';
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/public', express.static('public'));
 
 app.use('/auth', authRoutes);
 app.use('/tables', tableRoutes);
+app.use('/menu', menuRoutes);
 app.use('/orders', orderRoutes);
 app.use('/admin', adminRoutes);
 
