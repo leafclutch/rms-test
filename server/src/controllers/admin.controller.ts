@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import * as adminService from '../service/admin.service.js';
+import * as adminService from '../service/admin.service.ts';
 
 export const getActiveOrders = async (req: Request, res: Response, next: NextFunction) => {
     try {

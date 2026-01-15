@@ -1,6 +1,6 @@
 import prisma from '../config/prisma.ts';
 import { AppError } from '../utils/appError.ts';
-import { OrderStatus, PaymentMethod } from '@prisma/client';
+import { OrderStatus, PaymentMethod, CreditTransactionType } from '@prisma/client';
 
 interface Discount {
     type: 'FIXED' | 'PERCENT';
@@ -43,19 +43,28 @@ const getOrder = async (orderId: string) => {
     });
 
     if (!order) throw new AppError('Order not found', 404);
+
+    // Status Validations
     if (order.status === OrderStatus.paid) throw new AppError('Order is already paid', 400);
+    if (order.status === OrderStatus.cancelled) throw new AppError('Cannot pay for a cancelled order', 400);
+
+    // Amount Validation
+    if (Number(order.totalAmount) <= 0) {
+        throw new AppError('Order total amount must be greater than 0 to process payment', 400);
+    }
 
     return order;
 };
 
 // Helper: Log details for "Print Bill" (mock)
-const generateBillData = (order: any, finalAmount: number, discountAmount: number) => {
+const generateBillData = (order: any, finalAmount: number, discountAmount: number, method: PaymentMethod = PaymentMethod.CASH) => {
     return {
         orderId: order.id,
         tableId: order.tableId,
         totalAmount: Number(order.totalAmount),
         discountAmount: discountAmount,
         finalPayable: finalAmount,
+        paymentMethod: method,
         timestamp: new Date()
     };
 };
@@ -77,7 +86,7 @@ export const processCashPayment = async ({ orderId, discount, cashAmount }: Paym
             data: {
                 orderId,
                 method: PaymentMethod.CASH,
-                cashAmount: finalAmount, // We record what was paid towards the bill
+                cashAmount: finalAmount,
             }
         });
 
@@ -88,7 +97,7 @@ export const processCashPayment = async ({ orderId, discount, cashAmount }: Paym
                 status: OrderStatus.paid,
                 discountAmount: discountAmount,
                 dueAmount: 0,
-                cashAmount: finalAmount, // Store actual paid towards bill
+                cashAmount: finalAmount,
                 paymentMethod: PaymentMethod.CASH,
             }
         });
@@ -97,15 +106,13 @@ export const processCashPayment = async ({ orderId, discount, cashAmount }: Paym
     return {
         message: 'Cash payment successful',
         change,
-        bill: generateBillData(order, finalAmount, discountAmount)
+        bill: generateBillData(order, finalAmount, discountAmount, PaymentMethod.CASH)
     };
 };
 
 export const processOnlinePayment = async ({ orderId, discount }: PaymentPayload) => {
     const order = await getOrder(orderId);
     const { finalAmount, discountAmount } = calculateFinalPayable(Number(order.totalAmount), discount);
-
-    // Assume online payment is exact for now (integration would verify this)
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
         await tx.payment.create({
@@ -130,7 +137,7 @@ export const processOnlinePayment = async ({ orderId, discount }: PaymentPayload
 
     return {
         message: 'Online payment successful',
-        bill: generateBillData(order, finalAmount, discountAmount)
+        bill: generateBillData(order, finalAmount, discountAmount, PaymentMethod.ONLINE)
     };
 };
 
@@ -141,7 +148,7 @@ export const processMixedPayment = async ({ orderId, discount, cashAmount, onlin
     const cAmount = Number(cashAmount || 0);
     const oAmount = Number(onlineAmount || 0);
 
-    if (Math.abs((cAmount + oAmount) - finalAmount) > 0.01) { // Floating point tolerance
+    if (Math.abs((cAmount + oAmount) - finalAmount) > 0.01) {
         throw new AppError(`Total payment (${cAmount + oAmount}) does not match final payable (${finalAmount})`, 400);
     }
 
@@ -170,7 +177,7 @@ export const processMixedPayment = async ({ orderId, discount, cashAmount, onlin
 
     return {
         message: 'Mixed payment successful',
-        bill: generateBillData(order, finalAmount, discountAmount)
+        bill: generateBillData(order, finalAmount, discountAmount, PaymentMethod.MIXED)
     };
 };
 
@@ -178,52 +185,56 @@ export const processCreditPayment = async ({ orderId, customerPhone }: PaymentPa
     if (!customerPhone) throw new AppError('Customer phone required for credit payment', 400);
 
     const order = await getOrder(orderId);
-    // Credit payments don't usually get ad-hoc discounts at the counter in this logic, 
-    // but if requested we could add it. Assuming full amount for now or add discount param if needed.
-    const finalAmount = Number(order.totalAmount); 
-    
-    // Find or Create Customer
+    const finalAmount = Number(order.totalAmount);
+
+    // Find Credit Account
     let customer = await prisma.customer.findUnique({ where: { phoneNumber: customerPhone } });
     if (!customer) {
-        // Optionally create simplified customer if name not provided, or throw
-        throw new AppError('Customer not found. Please create customer profile first.', 404);
+        throw new AppError('Credit account not found. Would you like to create a credit account for this customer?', 404);
     }
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
-        // Create Credit Transaction
+        // Create a CHARGE Transaction (ADD DEBT)
         await tx.creditTransaction.create({
             data: {
                 customerId: customer!.id,
                 orderId,
                 amount: finalAmount,
+                type: CreditTransactionType.CHARGE,
+                description: `Order #${order.id.slice(0, 8).toUpperCase()} - Credit Charge`
             }
         });
 
-        // Update Customer Balance
-        await tx.customer.update({
+        //  Increase Customer totalDue
+        const updatedCustomer = await tx.customer.update({
             where: { id: customer!.id },
             data: {
                 totalDue: { increment: finalAmount }
             }
         });
 
-        // Update Order
+        // Mark Order as PAID (Financially closed, debt moved to ledger)
         return await tx.order.update({
             where: { id: orderId },
             data: {
                 status: OrderStatus.paid,
                 paymentMethod: PaymentMethod.CREDIT,
-                customerId: customer!.id, // Link customer if not already
-                dueAmount: finalAmount // Technically "due" from customer, but order is closed
+                customerId: customer!.id,
+                dueAmount: 0, // Order is financially closed; debt tracks in Customer ledger
+                cashAmount: 0,
+                onlineAmount: 0
             }
         });
     });
 
-    // Mock WhatsApp Notification
-    console.log(`[WhatsApp Mock] To: ${customerPhone} | Message: An item worth Rs. ${finalAmount} has been added to your credit account.`);
+    //WhatsApp Notification only log
+    const newTotalDue = Number(customer.totalDue) + finalAmount;
+    console.log(`[WhatsApp Mock] To: ${customerPhone} | Message: ₹${finalAmount} added to your credit. Total due: ₹${newTotalDue}`);
 
     return {
         message: 'Credit payment successful',
-        bill: generateBillData(order, finalAmount, 0)
+        bill: generateBillData(order, finalAmount, 0, PaymentMethod.CREDIT)
     };
 };
+
+
