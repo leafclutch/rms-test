@@ -2,6 +2,8 @@ import express from "express";
 const app = express();
 import authRoutes from './routes/auth.router.js';
 import tableRoutes from './routes/table.routes.js';
+import orderRoutes from './routes/order.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -9,6 +11,8 @@ app.use('/public', express.static('public'));
 
 app.use('/auth', authRoutes);
 app.use('/tables', tableRoutes);
+app.use('/orders', orderRoutes);
+app.use('/admin', adminRoutes);
 
 
 app.get('/', (req, res) => {
