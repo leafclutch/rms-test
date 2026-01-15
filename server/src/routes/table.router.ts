@@ -1,5 +1,5 @@
 import express from 'express';
-import * as tableController from '../controllers/table.controller.js';
+import * as tableController from '../controllers/table.controller.ts';
 
 const router = express.Router();
 

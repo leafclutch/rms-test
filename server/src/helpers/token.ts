@@ -1,18 +1,17 @@
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+import { config } from '../config/env.ts';
 
 export const createAccessToken = (userId: string, email: string, role: string) => {
   return jwt.sign(
     { userId, email, role },
-    JWT_SECRET,
+    config.jwtSecret,
     { expiresIn: '7d' }
   );
 };
 
 export const verifyToken = (token: string) => {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, config.jwtSecret);
   } catch (error) {
     throw new Error('Invalid or expired token');
   }

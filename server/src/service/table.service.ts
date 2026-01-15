@@ -1,4 +1,4 @@
-import prisma from '../config/prisma.js';
+import prisma from '../config/prisma.ts';
 import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
@@ -30,7 +30,13 @@ export const generateQRService = async ({ tableCode }: { tableCode: string }) =>
 
     // Generate QR Code File
     const qrFileName = `${table.tableCode}.png`;
-    const qrFilePath = path.join(process.cwd(), 'public', 'qrcodes', qrFileName);
+    const qrDir = path.join(process.cwd(), 'public', 'qrcodes');
+    const qrFilePath = path.join(qrDir, qrFileName);
+
+    // Ensure directory exists
+    if (!fs.existsSync(qrDir)) {
+        fs.mkdirSync(qrDir, { recursive: true });
+    }
 
     // Save to file
     await QRCode.toFile(qrFilePath, qrData);

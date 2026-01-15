@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { AppError } from '../utils/appError.js';
-import prisma from '../config/prisma.js';
+import { AppError } from '../utils/appError.ts';
+import prisma from '../config/prisma.ts';
+import { config } from '../config/env.ts';
 
 interface JwtPayload {
   userId: string;
@@ -24,7 +25,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as JwtPayload;
+    const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
 
     const currentUser = await prisma.profile.findUnique({
       where: { id: decoded.userId },

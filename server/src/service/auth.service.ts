@@ -1,5 +1,5 @@
-import prisma from '../config/prisma.js';
-import { createAccessToken } from '../helpers/token.js';
+import prisma from '../config/prisma.ts';
+import { createAccessToken } from '../helpers/token.ts';
 
 export const loginUserService = async ({ email, password }: any) => {
     if (!email || !password) throw new Error('Email and password are required');

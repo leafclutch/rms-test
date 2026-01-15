@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import * as authService from '../service/auth.service.js';
-import { AppError } from '../utils/appError.js';
+import * as authService from '../service/auth.service.ts';
+import { AppError } from '../utils/appError.ts';
 
 
 
