@@ -3,6 +3,8 @@ const app = express();
 import authRoutes from './routes/auth.router.ts';
 import tableRoutes from './routes/table.router.ts';
 import menuRoutes from './routes/menu.router.ts';
+import paymentRoutes from './routes/payment.router.ts';
+
 import orderRoutes from './routes/order.router.ts';
 import adminRoutes from './routes/admin.router.ts';
 app.use(express.json());
@@ -12,6 +14,7 @@ app.use('/public', express.static('public'));
 app.use('/auth', authRoutes);
 app.use('/tables', tableRoutes);
 app.use('/menu', menuRoutes);
+app.use('/payments', paymentRoutes);
 app.use('/orders', orderRoutes);
 app.use('/admin', adminRoutes);
 
