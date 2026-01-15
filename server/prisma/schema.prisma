@@ -87,7 +87,6 @@ model MenuItem {
   id          String        @id @default(uuid()) @db.Uuid
   name        String
   categoryId  String        @db.Uuid
-  categoryId  String        @db.Uuid
   price       Decimal
   isAvailable Boolean       @default(true)
   isSpecial   Boolean       @default(false)
@@ -122,8 +121,6 @@ model Customer {
 // ORDERS
 model Order {
   id               String        @id @default(uuid()) @db.Uuid
-  tableId          String        @db.Uuid
-  customerId       String?       @db.Uuid
   tableId          String        @db.Uuid
   customerId       String?       @db.Uuid
   customerPhone    String?
@@ -161,8 +158,6 @@ model OrderItem {
   id            String   @id @default(uuid()) @db.Uuid
   orderId       String   @db.Uuid
   menuItemId    String   @db.Uuid
-  orderId       String   @db.Uuid
-  menuItemId    String   @db.Uuid
   quantity      Int
   priceSnapshot Decimal
   createdAt     DateTime @default(now())
@@ -176,7 +171,6 @@ model OrderItem {
 // PAYMENTS
 model Payment {
   id            String        @id @default(uuid()) @db.Uuid
-  orderId       String        @db.Uuid
   orderId       String        @db.Uuid
   method        PaymentMethod
   cashAmount    Decimal       @default(0)
@@ -263,11 +257,4 @@ model PurchaseRecord {
   paymentStatus    String   @default("pending")
 
   @@map("purchase_records")
-}
-
-enum TransactionType {
-  PURCHASE
-  ORDER_CONSUMPTION
-  ADJUSTMENT
-  RETURN
 }
