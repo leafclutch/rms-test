@@ -3,6 +3,7 @@ const app = express();
 import authRoutes from './routes/auth.router.ts';
 import tableRoutes from './routes/table.router.ts';
 import menuRoutes from './routes/menu.router.ts';
+import paymentRoutes from './routes/payment.router.ts';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -11,6 +12,7 @@ app.use('/public', express.static('public'));
 app.use('/auth', authRoutes);
 app.use('/tables', tableRoutes);
 app.use('/menu', menuRoutes);
+app.use('/payments', paymentRoutes);
 
 
 app.get('/', (req, res) => {
