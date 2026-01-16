@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
 import { AppError } from '../utils/appError.ts';
+import { TableType } from '@prisma/client';
 
 export const generateQRService = async ({ tableCode }: { tableCode: string }) => {
     if (!tableCode) throw new AppError('Table code is required', 400);
@@ -73,7 +74,7 @@ export const getTableInfoService = async (tableCode: string) => {
     };
 };
 
-export const initVirtualTableService = async (data: { type: 'NAME_BASED' | 'ONLINE'; identifier: string }) => {
+export const initVirtualTableService = async (data: { type: TableType; identifier: string }) => {
     const { type, identifier } = data;
     if (!identifier) throw new AppError('Identifier (Name or Mobile) is required', 400);
 

@@ -16,20 +16,20 @@ router.patch('/orders/:orderId/items/:menuItemId/reduce', protect, adminControll
 router.delete('/orders/:orderId/items/:menuItemId', protect, adminController.cancelOrderItem);
 
 // Credit Management
-// router.post('/credit-accounts', protect, creditController.createAccount);
-// router.get('/credit-accounts', protect, creditController.listAccounts);
-// router.get('/credit-accounts/search', protect, creditController.searchAccounts);
-// router.get('/credit-accounts/:accountId', protect, creditController.getAccountDetails);
-// router.patch('/credit-accounts/:accountId', protect, creditController.updateAccount);
-// router.delete('/credit-accounts/:accountId', protect, creditController.deleteAccount);
-// router.post('/credit-accounts/:accountId/payment', protect, creditController.recordPayment);
+router.post('/credit-accounts', protect, creditController.createAccount);
+router.get('/credit-accounts', protect, creditController.listAccounts);
+router.get('/credit-accounts/search', protect, creditController.searchAccounts);
+router.get('/credit-accounts/:accountId', protect, creditController.getAccountDetails);
+router.patch('/credit-accounts/:accountId', protect, creditController.updateAccount);
+router.delete('/credit-accounts/:accountId', protect, creditController.deleteAccount);
+router.post('/credit-accounts/:accountId/payment', protect, creditController.recordPayment);
 
-router.post('/credit-accounts', creditController.createAccount);
-router.get('/credit-accounts', creditController.listAccounts);
-router.get('/credit-accounts/search', creditController.searchAccounts);
-router.get('/credit-accounts/:accountId', creditController.getAccountDetails);
-router.patch('/credit-accounts/:accountId', creditController.updateAccount);
-router.delete('/credit-accounts/:accountId', creditController.deleteAccount);
-router.post('/credit-accounts/:accountId/payment', creditController.recordPayment);
+// router.post('/credit-accounts', creditController.createAccount);
+// router.get('/credit-accounts', creditController.listAccounts);
+// router.get('/credit-accounts/search', creditController.searchAccounts);
+// router.get('/credit-accounts/:accountId', creditController.getAccountDetails);
+// router.patch('/credit-accounts/:accountId', creditController.updateAccount);
+// router.delete('/credit-accounts/:accountId', creditController.deleteAccount);
+// router.post('/credit-accounts/:accountId/payment', creditController.recordPayment);
 
 export default router;
