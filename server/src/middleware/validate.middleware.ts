@@ -13,9 +13,7 @@ export const validate =
                 })
 
                 if (!result.success) {
-                    // If body is completely empty, provide the requested message
-                    // Note: Zod might report "Required" for missing body fields.
-                    // But if the body object itself is empty from current request:
+                   
                     if (!req.body || (typeof req.body === 'object' && Object.keys(req.body).length === 0)) {
                         return next(new AppError('fields are required', 400))
                     }

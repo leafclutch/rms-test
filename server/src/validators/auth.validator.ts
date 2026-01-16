@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-//Registration validation schema
 export const registerSchema = z.object({
     body: z.object({
         email: z
@@ -18,7 +17,6 @@ export const registerSchema = z.object({
     })
 });
 
-// Login validation schema
 export const loginSchema = z.object({
     body: z.object({
         email: z
@@ -32,6 +30,5 @@ export const loginSchema = z.object({
 });
 
 
-// Export types for use in controllers and services
 export type RegisterInput = z.infer<typeof registerSchema>['body'];
 export type LoginInput = z.infer<typeof loginSchema>['body'];

@@ -7,13 +7,16 @@ datasource db {
   provider = "postgresql"
 }
 
+
+// ENUMS
+
 enum Role {
   admin
 }
 
 enum TableType {
   PHYSICAL
-  NAME_BASED
+  WALK_IN
   ONLINE
 }
 
@@ -47,7 +50,7 @@ enum TransactionType {
 
 // ADMIN PROFILE
 model Profile {
-  id        String   @id @db.Uuid // references auth.users.id
+  id        String   @id @db.Uuid 
   email     String   @unique
   password  String
   role      Role     @default(admin)
@@ -93,7 +96,6 @@ model MenuItem {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-
   category    MenuCategory  @relation(fields: [categoryId], references: [id])
   orderItems  OrderItem[]
   recipes     ItemRecipe[]
@@ -102,9 +104,7 @@ model MenuItem {
 }
 
 
-
 // CUSTOMERS (CREDIT / LEDGER)
-
 model Customer {
   id          String    @id @default(uuid()) @db.Uuid
   fullName    String
@@ -117,6 +117,7 @@ model Customer {
 
   @@map("customers")
 }
+
 
 // ORDERS
 model Order {
@@ -168,6 +169,7 @@ model OrderItem {
   @@map("order_items")
 }
 
+
 // PAYMENTS
 model Payment {
   id            String        @id @default(uuid()) @db.Uuid
@@ -182,15 +184,16 @@ model Payment {
   @@map("payments")
 }
 
+
 // CREDIT LEDGER
 model CreditTransaction {
-  id          String    @id @default(uuid()) @db.Uuid
-  customerId  String    @db.Uuid
-  orderId     String    @db.Uuid
+  id          String                @id @default(uuid()) @db.Uuid
+  customerId  String                @db.Uuid
+  orderId     String?               @db.Uuid
   amount      Decimal
   type        CreditTransactionType @default(CHARGE)
   description String?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime              @default(now())
 
   customer    Customer @relation(fields: [customerId], references: [id])
   order       Order?   @relation(fields: [orderId], references: [id])
@@ -203,7 +206,7 @@ model CreditTransaction {
 model InventoryItem {
   id           String   @id @default(uuid()) @db.Uuid
   name         String   @unique
-  currentStock Int      @default(0) // Integers for countable items
+  currentStock Int      @default(0)
   minimumStock Int      @default(5)
   unit         String   @default("pcs")
   updatedAt    DateTime @updatedAt
@@ -215,12 +218,12 @@ model InventoryItem {
 }
 
 model InventoryTransaction {
-  id              String        @id @default(uuid()) @db.Uuid
-  inventoryItemId String        @db.Uuid
+  id              String          @id @default(uuid()) @db.Uuid
+  inventoryItemId String          @db.Uuid
   type            TransactionType
   quantity        Int
-  referenceId     String?       // Could be OrderId or PurchaseRecordId
-  createdAt       DateTime      @default(now())
+  referenceId     String?
+  createdAt       DateTime        @default(now())
 
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
 
@@ -228,33 +231,33 @@ model InventoryTransaction {
 }
 
 model ItemRecipe {
-  id              String        @id @default(uuid()) @db.Uuid
-  menuItemId      String        @db.Uuid
-  inventoryItemId String        @db.Uuid
-  quantityRequired Int          @default(1)
+  id               String        @id @default(uuid()) @db.Uuid
+  menuItemId       String        @db.Uuid
+  inventoryItemId  String        @db.Uuid
+  quantityRequired Int           @default(1)
 
-  menuItem        MenuItem      @relation(fields: [menuItemId], references: [id])
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  menuItem      MenuItem      @relation(fields: [menuItemId], references: [id])
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id])
 
   @@unique([menuItemId, inventoryItemId])
   @@map("item_recipes")
 }
 
 
-// PURCHASES (Formerly Inventory)
+// PURCHASES
 model PurchaseRecord {
-  id               String   @id @default(uuid()) @db.Uuid
-  itemName         String
-  supplierName     String?
-  supplierPhone    String?
-  quantity         Decimal
-  unit             String
-  costPerUnit      Decimal
-  totalCost        Decimal
-  amountPaid       Decimal  @default(0)
-  remainingAmount  Decimal  @default(0)
-  purchaseDate     DateTime @default(now())
-  paymentStatus    String   @default("pending")
+  id              String   @id @default(uuid()) @db.Uuid
+  itemName        String
+  supplierName    String?
+  supplierPhone   String?
+  quantity        Decimal
+  unit            String
+  costPerUnit     Decimal
+  totalCost       Decimal
+  amountPaid      Decimal  @default(0)
+  remainingAmount Decimal  @default(0)
+  purchaseDate    DateTime @default(now())
+  paymentStatus   String   @default("pending")
 
   @@map("purchase_records")
 }

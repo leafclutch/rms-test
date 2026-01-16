@@ -1,17 +1,22 @@
 import "dotenv/config";
 import app from "./app.js";
 import { connectToDB } from "./config/prisma.ts";
+import { createServer } from 'http';
+import { initializeSocket } from './socket.ts';
+
 const PORT = process.env.PORT ;
 
 const startServer =  async () => {
+    await connectToDB();
 
-  await connectToDB();
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+    const server = createServer(app);
+    initializeSocket(server);
 
-  // Keep process alive
-  setInterval(() => {}, 1000 * 60 * 60);
-}
+    server.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+
+    setInterval(() => {}, 1000 * 60 * 60);
+};
 
 startServer();

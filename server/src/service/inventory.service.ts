@@ -59,7 +59,6 @@ export const recordPurchaseService = async (data: PurchaseInput) => {
         });
     }
 
-    // 3. Record Inventory Transaction (PURCHASE)
     await prisma.inventoryTransaction.create({
         data: {
             inventoryItemId: item.id,
@@ -104,10 +103,7 @@ export const deductStockForOrderService = async (orderId: string, orderItems: an
                  data: {
                      inventoryItemId: recipe.inventoryItemId,
                      type: 'ORDER_CONSUMPTION',
-                     quantity: -deductAmount, // Negative since it's consumption? Or just magnitude with type? 
-                     // Usually for auditing "quantity" implies change direction or magnitude. 
-                     // Let's use magnitude and rely on TYPE, or signed. 
-                     // Best practice: SIGNED. -5 means removed.
+                     quantity: -deductAmount, 
                      referenceId: orderId
                  }
              });
