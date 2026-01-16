@@ -80,10 +80,17 @@ export const listAllCreditAccounts = async () => {
 };
 
 export const updateAccount = async (accountId: string, data: { fullName?: string; phoneNumber?: string }) => {
-    return await prisma.customer.update({
-        where: { id: accountId },
-        data
-    });
+    try {
+        return await prisma.customer.update({
+            where: { id: accountId },
+            data
+        });
+    } catch (error: any) {
+        if (error.code === 'P2002') {
+            throw new AppError('A customer with this phone number already exists', 400);
+        }
+        throw error;
+    }
 };
 
 export const deleteAccount = async (accountId: string) => {

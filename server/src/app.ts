@@ -1,5 +1,6 @@
 import express from "express";
 const app = express();
+import cors from 'cors';
 import authRoutes from './routes/auth.router.ts';
 import tableRoutes from './routes/table.router.ts';
 import menuRoutes from './routes/menu.router.ts';
@@ -7,9 +8,9 @@ import paymentRoutes from './routes/payment.router.ts';
 import orderRoutes from './routes/order.router.ts';
 import adminRoutes from './routes/admin.router.ts';
 import inventoryRoutes from './routes/inventory.router.js'; 
-
 import reportsRoutes from './routes/reports.router.js'; 
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/public', express.static('public'));
