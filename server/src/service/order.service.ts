@@ -81,12 +81,34 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
         currentTotal += lineTotal;
     }
 
-    // 5. Update Order Total
     await prisma.order.update({
         where: { id: order.id },
         data: { totalAmount: currentTotal }
     });
+    
+    try {
+        await import('./inventory.service.js').then(s => s.deductStockForOrderService(order.id, items));
+    } catch (err) {
+        console.error("Failed to deduct inventory:", err);
+    }
 
-    //Notify Admin (Socket.io) - TODO
+    try {
+        const { getIO } = await import('../socket.ts');
+        const io = getIO();
+        const eventName = order.items.length === items.length ? 'order:new' : 'order:updated'; // Simple heuristic, refine if needed
+        
+        io.emit('order:updated', { 
+            orderId: order.id, 
+            tableCode, 
+            totalAmount: currentTotal,
+            items: order.items 
+        });
+
+       
+        
+    } catch (err) {
+        console.error("Socket emit failed:", err);
+    }
+
     return { message: 'Order placed successfully', orderId: order.id };
 };

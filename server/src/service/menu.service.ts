@@ -1,7 +1,6 @@
 import prisma from '../config/prisma.ts';
 import { AppError } from '../utils/appError.ts';
 
-// GET /menu - Public: Fetch all menu items grouped by category
 export const getPublicMenuService = async () => {
     const categories = await prisma.menuCategory.findMany({
         include: {
@@ -132,10 +131,34 @@ export const deleteMenuItemService = async (id: string) => {
     // Check if menu item exists
     const existingItem = await prisma.menuItem.findUnique({
         where: { id },
+        include: {
+            _count: {
+                select: {
+                    orderItems: true,
+                    recipes: true,
+                }
+            }
+        }
     });
 
     if (!existingItem) {
         throw new AppError('Menu item not found', 404);
+    }
+
+    // If item is linked to orders, prevent deletion to preserve history
+    if (existingItem._count.orderItems > 0) {
+        throw new AppError(
+            'Cannot delete this item because it is linked to previous orders. Please mark it as "Unavailable" instead to hide it from the menu.',
+            400
+        );
+    }
+
+    // If item has recipes, delete recipes first or prevent deletion
+    if (existingItem._count.recipes > 0) {
+         // Optionally, we could delete recipes automatically here, but better to be safe
+         await prisma.itemRecipe.deleteMany({
+             where: { menuItemId: id }
+         });
     }
 
     await prisma.menuItem.delete({

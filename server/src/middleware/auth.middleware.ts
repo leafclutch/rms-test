@@ -43,3 +43,11 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
     return next(new AppError('Invalid token. Please log in again.', 401));
   }
 };
+
+export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if ((req as any).user && (req as any).user.role === 'admin') {
+    next();
+  } else {
+    next(new AppError('You do not have permission to perform this action', 403));
+  }
+};
