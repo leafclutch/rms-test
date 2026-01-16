@@ -16,7 +16,7 @@ enum Role {
 
 enum TableType {
   PHYSICAL
-  NAME_BASED
+  WALK_IN
   ONLINE
 }
 
