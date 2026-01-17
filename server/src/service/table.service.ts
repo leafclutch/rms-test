@@ -24,7 +24,7 @@ export const generateQRService = async ({ tableCode }: { tableCode: string }) =>
     }
 
     // Format: FRONTEND_URL/menu?table=tableCode
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const qrData = `${frontendUrl}/menu?table=${table.tableCode}`;
 
     // Generate QR Code File

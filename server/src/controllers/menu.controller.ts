@@ -78,3 +78,55 @@ export const toggleSpecial = async (req: Request, res: Response, next: NextFunct
         next(error);
     }
 };
+
+// --- CATEGORY CONTROLLERS ---
+
+// GET /menu/admin/category - Fetch all categories
+export const getCategories = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const result = await menuService.getCategoriesService();
+        res.status(200).json(result);
+    } catch (error: any) {
+        next(error);
+    }
+};
+
+// POST /menu/admin/category - Create category
+export const createCategory = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { name } = req.body;
+        const result = await menuService.createCategoryService(name);
+        res.status(201).json(result);
+    } catch (error: any) {
+        next(error);
+    }
+};
+
+// PUT /menu/admin/category/:id - Update category
+export const updateCategory = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        if (!id || typeof id !== 'string') {
+            throw new Error('Invalid category ID');
+        }
+        const { name } = req.body;
+        const result = await menuService.updateCategoryService(id, name);
+        res.status(200).json(result);
+    } catch (error: any) {
+        next(error);
+    }
+};
+
+// DELETE /menu/admin/category/:id - Delete category
+export const deleteCategory = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        if (!id || typeof id !== 'string') {
+            throw new Error('Invalid category ID');
+        }
+        const result = await menuService.deleteCategoryService(id);
+        res.status(200).json(result);
+    } catch (error: any) {
+        next(error);
+    }
+};

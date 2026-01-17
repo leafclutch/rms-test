@@ -93,6 +93,7 @@ model MenuItem {
   price       Decimal
   isAvailable Boolean       @default(true)
   isSpecial   Boolean       @default(false)
+  isVeg       Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 

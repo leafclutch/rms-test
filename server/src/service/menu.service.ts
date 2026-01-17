@@ -11,6 +11,7 @@ export const getPublicMenuService = async () => {
                     price: true,
                     isAvailable: true,
                     isSpecial: true,
+                    isVeg: true,
                 },
                 orderBy: {
                     name: 'asc',
@@ -38,8 +39,9 @@ export const createMenuItemService = async (data: {
     price: number;
     isAvailable?: boolean;
     isSpecial?: boolean;
+    isVeg?: boolean;
 }) => {
-    const { name, categoryId, price, isAvailable, isSpecial } = data;
+    const { name, categoryId, price, isAvailable, isSpecial, isVeg } = data;
 
     if (!name || !categoryId || price === undefined) {
         throw new AppError('Name, categoryId, and price are required', 400);
@@ -61,6 +63,7 @@ export const createMenuItemService = async (data: {
             price,
             isAvailable: isAvailable ?? true,
             isSpecial: isSpecial ?? false,
+            isVeg: isVeg ?? true,
         },
         include: {
             category: true,
@@ -82,6 +85,7 @@ export const updateMenuItemService = async (
         price?: number;
         isAvailable?: boolean;
         isSpecial?: boolean;
+        isVeg?: boolean;
     }
 ) => {
     if (!id) {
@@ -233,5 +237,73 @@ export const toggleSpecialService = async (id: string, isSpecial: boolean) => {
     return {
         message: `Menu item ${isSpecial ? 'marked as special' : 'unmarked as special'}`,
         menuItem: updatedItem,
+    };
+};
+
+// --- CATEGORY SERVICES ---
+
+export const getCategoriesService = async () => {
+    const categories = await prisma.menuCategory.findMany({
+        include: {
+            _count: {
+                select: { items: true }
+            }
+        },
+        orderBy: { name: 'asc' }
+    });
+    return { categories };
+};
+
+export const createCategoryService = async (name: string) => {
+    if (!name) throw new AppError('Category name is required', 400);
+
+    const existing = await prisma.menuCategory.findUnique({ where: { name } });
+    if (existing) throw new AppError('Category with this name already exists', 400);
+
+    const category = await prisma.menuCategory.create({
+        data: { name }
+    });
+
+    return {
+        message: 'Category created successfully',
+        category
+    };
+};
+
+export const updateCategoryService = async (id: string, name: string) => {
+    if (!id || !name) throw new AppError('ID and name are required', 400);
+
+    const category = await prisma.menuCategory.findUnique({ where: { id } });
+    if (!category) throw new AppError('Category not found', 404);
+
+    const updated = await prisma.menuCategory.update({
+        where: { id },
+        data: { name }
+    });
+
+    return {
+        message: 'Category updated successfully',
+        category: updated
+    };
+};
+
+export const deleteCategoryService = async (id: string) => {
+    if (!id) throw new AppError('Category ID is required', 400);
+
+    const category = await prisma.menuCategory.findUnique({
+        where: { id },
+        include: { _count: { select: { items: true } } }
+    });
+
+    if (!category) throw new AppError('Category not found', 404);
+
+    if (category._count.items > 0) {
+        throw new AppError('Cannot delete category because it contains menu items', 400);
+    }
+
+    await prisma.menuCategory.delete({ where: { id } });
+
+    return {
+        message: 'Category deleted successfully'
     };
 };
