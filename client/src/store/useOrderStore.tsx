@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createOrder, getOrders, preparingOrder, serveOrder } from '../api/orders';
 import api from '../api/axios';
+import { socket } from '../api/socket';
 import toast from 'react-hot-toast';
 import type { Order, OrderStatus } from '../types/order';
 
@@ -18,6 +19,8 @@ interface OrderStore {
     getFilteredOrders: () => Order[];
     getOrderById: (id: string) => Order | null;
     addOrder: (order: any) => Promise<void>;
+    updateOrder: (orderId: string, updates: Partial<Order>) => void;
+    initializeSocket: () => () => void;
 }
 
 export const useOrderStore = create<OrderStore>((set, get) => ({
@@ -63,15 +66,46 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
         };
 
         try {
-            const createdOrder = await createOrder(payload);
+            const response = await createOrder(payload);
+            const newOrder = response.order || response;
+
+            // Map the new order to match the store's expected format
+            const mappedOrder = {
+                ...newOrder,
+                tableNumber: newOrder.table?.tableCode || newOrder.tableNumber || "WALK_IN"
+            };
+
             set((state) => ({
-                orders: [createdOrder, ...state.orders]
+                orders: [mappedOrder, ...state.orders]
             }));
             toast.success("Order placed successfully!");
         } catch (error: any) {
             toast.error(error?.message || "Failed to place order.");
             throw error;
         }
+    },
+
+    initializeSocket: () => {
+        const { fetchOrders } = get();
+
+        // Listen for new orders
+        socket.on('order:new', (data) => {
+            console.log('New order received via socket:', data);
+            fetchOrders(); // Refresh all orders to ensure consistent state
+            toast('New Order Received!', { icon: '🔔' });
+        });
+
+        // Listen for order updates
+        socket.on('order:updated', (data) => {
+            console.log('Order update received via socket:', data);
+            fetchOrders();
+            toast('Order Updated', { icon: '📝' });
+        });
+
+        return () => {
+            socket.off('order:new');
+            socket.off('order:updated');
+        };
     },
 
     updateOrderStatus: async (orderId: string, newStatus: OrderStatus) => {
@@ -117,5 +151,13 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     getOrderById: (id: string) => {
         const { orders } = get();
         return orders.find((o) => o.id === id || o.orderNumber === id) || null;
+    },
+
+    updateOrder: (orderId: string, updates: Partial<Order>) => {
+        set((state) => ({
+            orders: state.orders.map((order) =>
+                order.id === orderId ? { ...order, ...updates } : order
+            ),
+        }));
     }
 }));

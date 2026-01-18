@@ -837,7 +837,7 @@ const CustomerMenuView: React.FC = () => {
       // Create order payload - pass full cart items (MenuItem & { quantity })
       const orderPayload = {
         items: cart, // cart is already (MenuItem & { quantity })[]
-        customerType: (tableId ? "DINE-IN" : "ONLINE") as "DINE-IN" | "ONLINE",
+        customerType: (tableId ? "DINE_IN" : "ONLINE") as "DINE_IN" | "ONLINE",
         tableCode: tableId ? tableId.toUpperCase() : undefined,
       };
 

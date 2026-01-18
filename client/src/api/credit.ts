@@ -65,7 +65,7 @@ export const settleDebt = (
 
 // Search credit accounts by phone number
 export const searchCreditAccountByPhone = async (phoneNumber: string) => {
-  const response = await api.get(`/admin/credit/accounts/search`, {
+  const response = await api.get(`/admin/credit-accounts/search`, {
     params: { query: phoneNumber }
   });
   return response.data;
@@ -73,7 +73,7 @@ export const searchCreditAccountByPhone = async (phoneNumber: string) => {
 
 // Create credit account
 export const createCreditAccount = async (fullName: string, phoneNumber: string) => {
-  const response = await api.post("/admin/credit/accounts", { fullName, phoneNumber });
+  const response = await api.post("/admin/credit-accounts", { fullName, phoneNumber });
   return response.data;
 };
 

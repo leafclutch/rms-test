@@ -16,6 +16,7 @@ const AdminOrdersView = () => {
         setCurrentOrder,
         currentOrder,
         updateOrderStatus,
+        initializeSocket,
         isLoading,
         error,
     } = useOrderStore();
@@ -24,7 +25,9 @@ const AdminOrdersView = () => {
 
     useEffect(() => {
         fetchOrders();
-    }, [fetchOrders]);
+        const cleanup = initializeSocket();
+        return () => cleanup && cleanup();
+    }, [fetchOrders, initializeSocket]);
 
 
     return (

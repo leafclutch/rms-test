@@ -1,17 +1,36 @@
-// ============================================
-// TABLE SELECTION VIEW
-// ============================================
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCreditStore } from '../../store/useCreditStore';
+import { Phone, CheckCircle } from 'lucide-react';
+import type { Customer } from '../../types/Customer';
 
 const AdminWalkInCustomer = () => {
   // `inputValue` can be either a name or a number (e.g. table number or customer name/phone)
   const [inputValue, setInputValue] = useState('');
   const navigate = useNavigate();
+  const { customers, fetchCustomers } = useCreditStore();
+  const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  useEffect(() => {
+    if (inputValue.length >= 7) {
+      const matched = customers.find((c: Customer) =>
+        c.phone === inputValue ||
+        c.phone.replace(/\D/g, '') === inputValue.replace(/\D/g, '')
+      );
+      setFoundCustomer(matched || null);
+    } else {
+      setFoundCustomer(null);
+    }
+  }, [inputValue, customers]);
 
   const handleCustomConfirm = () => {
-    // Pass the value as a query parameter (represents name or number)
-    navigate(`/admin/walk-in-order?customer=${encodeURIComponent(inputValue)}`);
+    // If we found a customer, pass their name as well or use it
+    const finalName = foundCustomer ? foundCustomer.name : inputValue;
+    navigate(`/admin/walk-in-order?customer=${encodeURIComponent(finalName)}`);
   };
 
   return (
@@ -27,17 +46,34 @@ const AdminWalkInCustomer = () => {
                 Customer Name / Phone (Optional)
               </h3>
               <div className="flex gap-3">
-                <input
-                  type="text"
-                  placeholder="Enter table number, name, or phone (e.g., 5, Ram, 98******)"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  className="flex-1 px-4 py-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                />
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    placeholder="Enter table number, name, or phone (e.g., 5, Ram, 98******)"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    className="w-full px-4 py-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                  />
+                  {foundCustomer && (
+                    <div className="absolute top-full left-0 right-0 mt-2 p-3 bg-white border-2 border-green-500 rounded-lg shadow-lg z-10 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-100 p-2 rounded-full">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">Found: {foundCustomer.name}</p>
+                          <p className="text-xs text-gray-600 flex items-center gap-1">
+                            <Phone className="w-3 h-3" /> {foundCustomer.phone}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={handleCustomConfirm}
                   disabled={!inputValue}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed h-fit"
                 >
                   Confirm
                 </button>

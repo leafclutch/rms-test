@@ -15,14 +15,17 @@ import { useMenuStore } from '../../store/useMenuStore';
 import type { MenuItem } from '../../types/menu';
 import { useCartStore } from '../../store/useCartStore';
 import { useOrderStore } from '../../store/useOrderStore';
+import { useCreditStore } from '../../store/useCreditStore';
+import { CheckCircle } from 'lucide-react';
+import type { Customer } from '../../types/Customer';
 
 // Types for product.image
 type ProductImage =
   | string
   | {
-      url: string;
-      alt?: string;
-    }
+    url: string;
+    alt?: string;
+  }
   | undefined
   | null;
 
@@ -42,7 +45,7 @@ export const WalkInOrder: React.FC = () => {
   } = useMenuStore();
 
   const { items: cartItems, addItem, removeItem, updateQuantity, getTotalAmount, getTotalItems, clearCart } = useCartStore();
-  const { currentOrder, updateOrder, addOrder } = useOrderStore();
+  const { currentOrder, updateOrder, addOrder, fetchOrders, orders, initializeSocket } = useOrderStore();
 
   const [allItems, setAllItems] = useState<MenuItem[]>([]);
   const originalCustomerNameRef = useRef(currentOrder?.customerName || '');
@@ -52,13 +55,32 @@ export const WalkInOrder: React.FC = () => {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
 
+  const { customers, fetchCustomers: fetchCreditCustomers } = useCreditStore();
+  const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
+
   // Fetch menu items from store (backend)
   useEffect(() => {
     fetchAll().then(() => {
       setAllItems(getFilteredItems());
     });
+    fetchOrders();
+    fetchCreditCustomers();
+    const cleanup = initializeSocket();
+    return () => cleanup && cleanup();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchAll]);
+  }, [fetchAll, fetchOrders, initializeSocket, fetchCreditCustomers]);
+
+  useEffect(() => {
+    if (isEditingCustomer && customerName.length >= 7) {
+      const matched = customers.find((c: Customer) =>
+        c.phone === customerName ||
+        c.phone.replace(/\D/g, '') === customerName.replace(/\D/g, '')
+      );
+      setFoundCustomer(matched || null);
+    } else {
+      setFoundCustomer(null);
+    }
+  }, [customerName, customers, isEditingCustomer]);
 
   // Sync filtered items whenever store updates
   useEffect(() => {
@@ -142,12 +164,14 @@ export const WalkInOrder: React.FC = () => {
   };
 
   const handleSaveCustomerName = () => {
-    const finalName = customerName.trim();
+    const finalName = foundCustomer ? foundCustomer.name : customerName.trim();
+    setCustomerName(finalName);
     if (currentOrder) {
       updateOrder(currentOrder.id, { customerName: finalName || undefined });
       originalCustomerNameRef.current = finalName;
     }
     setIsEditingCustomer(false);
+    setFoundCustomer(null);
   };
 
   /**
@@ -167,7 +191,7 @@ export const WalkInOrder: React.FC = () => {
     try {
       // Prepare order structure; fix: include price & name in each item
       const newOrder = {
-        customerType: "WALK-IN" as "WALK-IN",
+        customerType: "WALK_IN" as "WALK_IN",
         customerName: customerName.trim() || "Walk-in Customer",
         items: cartItems.map(item => ({
           id: item.id,
@@ -240,26 +264,39 @@ export const WalkInOrder: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <>
+                <div className="flex items-center gap-2 relative">
                   <input
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="border rounded-md px-2 py-1 text-sm"
+                    className="border-2 border-orange-300 rounded-md px-2 py-1 text-sm focus:border-orange-500 outline-none"
+                    placeholder="Name or Phone"
                     autoFocus
                   />
-                  <button onClick={handleSaveCustomerName} className="text-green-600">
+                  {foundCustomer && (
+                    <div className="absolute top-full left-0 mt-1 p-2 bg-white border-2 border-green-500 rounded-lg shadow-lg z-50 min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <div>
+                          <p className="font-bold text-xs">Found Account</p>
+                          <p className="text-sm font-semibold text-gray-900">{foundCustomer.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <button onClick={handleSaveCustomerName} className="text-green-600 hover:bg-green-50 p-1 rounded-md">
                     <Check size={16} />
                   </button>
                   <button
                     onClick={() => {
                       setCustomerName(originalCustomerNameRef.current);
                       setIsEditingCustomer(false);
+                      setFoundCustomer(null);
                     }}
-                    className="text-red-500"
+                    className="text-red-500 hover:bg-red-50 p-1 rounded-md"
                   >
                     <X size={16} />
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -355,6 +392,39 @@ export const WalkInOrder: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Active Walk-in Orders Section */}
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 pb-2 border-b-2">Recent Walk-in Orders</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {orders
+                  .filter(o => (o.table?.tableType === 'WALK_IN' || o.tableNumber?.startsWith('WALKIN')) && ['pending', 'preparing', 'served'].includes(o.status))
+                  .length === 0 ? (
+                  <p className="text-gray-400 col-span-full py-4 text-center bg-white rounded-xl border border-dashed">No active walk-in orders</p>
+                ) : (
+                  orders
+                    .filter(o => (o.table?.tableType === 'WALK_IN' || o.tableNumber?.startsWith('WALKIN')) && ['pending', 'preparing', 'served'].includes(o.status))
+                    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+                    .map((order) => (
+                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border hover:shadow-md transition cursor-pointer" onClick={() => navigate('/admin/orders')}>
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-bold text-gray-800">{order.customerName || 'Walk-in'}</p>
+                            <p className="text-xs text-gray-500">{new Date(order.createdAt || '').toLocaleTimeString()}</p>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${order.status === 'pending' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                            {order.status}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">{order.items.length} items</span>
+                          <span className="font-bold text-orange-600">Rs. {order.totalAmount}</span>
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
           </section>
 
           {/* Cart Sidebar */}
@@ -406,4 +476,3 @@ export const WalkInOrder: React.FC = () => {
 };
 
 export default WalkInOrder;
-
