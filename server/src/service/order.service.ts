@@ -144,17 +144,34 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
         console.error("Failed to deduct inventory:", err);
     }
 
+    // Emit socket event with fresh data
     try {
         const { getIO } = await import('../socket.ts');
         const io = getIO();
-        const eventName = order.items.length === items.length ? 'order:new' : 'order:updated';
 
-        io.emit(eventName, {
-            orderId: order.id,
-            tableCode: targetTableCode,
-            totalAmount: currentTotal,
-            items: order.items
+        // Fetch the updated order with items for the socket payload
+        const updatedOrder = await prisma.order.findUnique({
+            where: { id: order.id },
+            include: { items: true }
         });
+
+        if (updatedOrder) {
+            // If it was just created (status pending and no items until now), it's 'order:new'
+            // Otherwise it's 'order:updated'. 
+            // A more robust way: check if this was the first time items were added to an empty order.
+            // For now, if the original order we found/created was just created (id matches the newly created one), call it 'new'
+            const eventName = order.status === 'pending' && (!order.items || order.items.length === 0)
+                ? 'order:new'
+                : 'order:updated';
+
+            io.emit(eventName, {
+                orderId: updatedOrder.id,
+                tableCode: targetTableCode,
+                totalAmount: Number(updatedOrder.totalAmount),
+                items: updatedOrder.items,
+                status: updatedOrder.status
+            });
+        }
     } catch (err) {
         console.error("Socket emit failed:", err);
     }

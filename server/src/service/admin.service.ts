@@ -43,6 +43,12 @@ export const serveOrderService = async (orderId: string) => {
         where: { id: orderId },
         data: { status: 'served' }
     });
+
+    try {
+        const { getIO } = await import('../socket.ts');
+        getIO().emit('order:updated', { orderId, status: 'served' });
+    } catch (e) { console.error("Socket error", e); }
+
     return { message: 'Order marked as served', order };
 };
 
@@ -51,6 +57,12 @@ export const preparingOrderService = async (orderId: string) => {
         where: { id: orderId },
         data: { status: 'preparing' }
     });
+
+    try {
+        const { getIO } = await import('../socket.ts');
+        getIO().emit('order:updated', { orderId, status: 'preparing' });
+    } catch (e) { console.error("Socket error", e); }
+
     return { message: 'Order is being prepared', order };
 };
 
@@ -105,6 +117,12 @@ export const reduceOrderItemService = async (orderId: string, menuItemId: string
         }
 
         const newTotal = await recalculateOrderTotal(orderId, tx);
+
+        try {
+            const { getIO } = await import('../socket.ts');
+            getIO().emit('order:updated', { orderId, totalAmount: newTotal });
+        } catch (e) { console.error("Socket error", e); }
+
         return { message: 'Item quantity reduced', newTotal };
     });
 };
@@ -120,6 +138,12 @@ export const cancelOrderItemService = async (orderId: string, menuItemId: string
         await tx.orderItem.delete({ where: { id: orderItem.id } });
 
         const newTotal = await recalculateOrderTotal(orderId, tx);
+
+        try {
+            const { getIO } = await import('../socket.ts');
+            getIO().emit('order:updated', { orderId, totalAmount: newTotal });
+        } catch (e) { console.error("Socket error", e); }
+
         return { message: 'Item removed from order', newTotal };
     });
 };
@@ -170,6 +194,12 @@ export const addItemsToOrderService = async (orderId: string, items: { menuItemI
         }
 
         const newTotal = await recalculateOrderTotal(orderId, tx);
+
+        try {
+            const { getIO } = await import('../socket.ts');
+            getIO().emit('order:updated', { orderId, totalAmount: newTotal });
+        } catch (e) { console.error("Socket error", e); }
+
         return { message: 'Items added to order', newTotal };
     });
 };
