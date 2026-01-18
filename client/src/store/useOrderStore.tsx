@@ -3,7 +3,7 @@ import { createOrder, getOrders, preparingOrder, serveOrder, getOrderHistory } f
 import api from '../api/axios';
 import { socket, connectSocket } from '../api/socket';
 import toast from 'react-hot-toast';
-import { Bell, RefreshCcw, CheckCircle, ClipboardCheck, XCircle } from 'lucide-react';
+import { Bell, CheckCircle, ClipboardCheck, XCircle } from 'lucide-react';
 import type { Order, OrderStatus } from '../types/order';
 
 interface OrderStore {
@@ -150,9 +150,6 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
             console.log('Order update received via socket:', data);
             if (get().isHistoryMode) fetchHistory();
             else fetchOrders();
-            toast('Order Updated', {
-                icon: <RefreshCcw className="w-5 h-5 text-blue-500 animate-spin-slow" />
-            });
         });
 
         // Listen for payments
@@ -160,9 +157,6 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
             console.log('Order payment received via socket:', data);
             fetchOrders();
             fetchHistory();
-            toast.success('Order Paid Successfully!', {
-                icon: <CheckCircle className="w-5 h-5 text-green-500" />
-            });
         });
 
         return () => {
