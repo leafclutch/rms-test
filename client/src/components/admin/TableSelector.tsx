@@ -6,8 +6,6 @@ type Props = {
 };
 
 const tables = ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"];
-const cabins = ["C1", "C2", "C3", "C4", "C5"];
-const outside = ["O1", "O2", "O3"];
 
 const TableSelector: React.FC<Props> = ({ mode = "customer", onSelect }) => {
   const handleClick = (table: string) => {
@@ -32,16 +30,6 @@ const TableSelector: React.FC<Props> = ({ mode = "customer", onSelect }) => {
       <div>
         <h3 className="font-semibold mb-3">Tables</h3>
         <div className="grid grid-cols-4 gap-3">{renderButtons(tables)}</div>
-      </div>
-
-      <div>
-        <h3 className="font-semibold mb-3">Cabins</h3>
-        <div className="grid grid-cols-4 gap-3">{renderButtons(cabins)}</div>
-      </div>
-
-      <div>
-        <h3 className="font-semibold mb-3">Outside</h3>
-        <div className="grid grid-cols-3 gap-3">{renderButtons(outside)}</div>
       </div>
     </div>
   );

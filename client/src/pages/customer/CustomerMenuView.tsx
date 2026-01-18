@@ -750,7 +750,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, X, Plus, Minus, Trash2, Check, Clock, ChefHat, Package, ArrowLeft, MapPin } from "lucide-react";
+import { Search, ShoppingCart, X, Plus, Minus, Trash2, Check, ArrowLeft, MapPin } from "lucide-react";
 import { useMenuStore } from "../../store/useMenuStore";
 import { useCustomerOrderStore } from "../../store/useCustomerOrderStore";
 import { useCustomerCartStore } from "../../store/useCustomerCartStore";
@@ -809,7 +809,6 @@ const CustomerMenuView: React.FC = () => {
   const [showCart, setShowCart] = useState(false);
   const [showOrderSuccess, setShowOrderSuccess] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<any>(null);
-  const [showOrderTracking, setShowOrderTracking] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   // On mount, fetch menu items
@@ -886,46 +885,6 @@ const CustomerMenuView: React.FC = () => {
     return matchesTop && matchesCat && matchesSearch;
   });
 
-  // Get order status details
-  const getOrderStatusDetails = (status: string) => {
-    switch (status) {
-      case "pending":
-        return {
-          icon: Clock,
-          text: "Order Received",
-          color: "text-blue-600",
-          bg: "bg-blue-100",
-        };
-      case "preparing":
-        return {
-          icon: ChefHat,
-          text: "Preparing",
-          color: "text-orange-600",
-          bg: "bg-orange-100",
-        };
-      case "served":
-        return {
-          icon: ChefHat,
-          text: "Served",
-          color: "text-green-600",
-          bg: "bg-green-100",
-        };
-      case "paid":
-        return {
-          icon: Check,
-          text: "Paid",
-          color: "text-gray-600",
-          bg: "bg-gray-100",
-        };
-      default:
-        return {
-          icon: Clock,
-          text: "Unknown",
-          color: "text-gray-400",
-          bg: "bg-gray-100"
-        }
-    }
-  };
 
   // Cart totals (from custom store selectors)
   const cartTotal = getTotalAmount();
@@ -964,27 +923,6 @@ const CustomerMenuView: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {orders.filter((o) =>
-              tableId
-                ? o.tableCode?.toLowerCase() === tableId.toLowerCase()
-                : true
-            ).length > 0 && (
-                <button
-                  onClick={() => setShowOrderTracking(true)}
-                  className="relative p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  <Package className="w-5 h-5 lg:w-6 lg:h-6" />
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
-                    {orders.filter(
-                      (o) =>
-                        (tableId
-                          ? o.tableCode?.toLowerCase() ===
-                          tableId.toLowerCase()
-                          : true) && !["paid", "cancelled"].includes(o.status)
-                    ).length}
-                  </span>
-                </button>
-              )}
             <button
               onClick={() => setShowCart((s) => !s)}
               className="relative p-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
@@ -999,41 +937,6 @@ const CustomerMenuView: React.FC = () => {
           </div>
         </div>
 
-        {/* Active Order Alert for this Table */}
-        {activeOrder && (
-          <div className="bg-blue-50 border-b border-blue-200">
-            <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3">
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <ShoppingCart className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-blue-900">
-                    Active Order:{" "}
-                    <span className="text-orange-600">
-                      {activeOrder.orderNumber}
-                    </span>
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    {activeOrder.items.length} items • Rs.{" "}
-                    {activeOrder.totalAmount} •
-                    <span className="ml-1 font-medium">
-                      {activeOrder.status === "pending" && "⏳ Pending"}
-                      {activeOrder.status === "preparing" && "👨‍🍳 Preparing"}
-                      {activeOrder.status === "served" && "🍽️ Served"}
-                    </span>
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowOrderTracking(true)}
-                  className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700"
-                >
-                  Track
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Top Category Images */}
         <div className="bg-white border-b">
@@ -1277,15 +1180,6 @@ const CustomerMenuView: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={() => {
-                setShowOrderSuccess(false);
-                setShowOrderTracking(true);
-              }}
-              className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold mb-3"
-            >
-              Track Order
-            </button>
-            <button
               onClick={() => setShowOrderSuccess(false)}
               className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold"
             >
@@ -1295,164 +1189,6 @@ const CustomerMenuView: React.FC = () => {
         </div>
       )}
 
-      {/* Order Tracking Modal */}
-      {showOrderTracking && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Order Tracking
-              </h2>
-              <button
-                onClick={() => setShowOrderTracking(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              {orders.filter((o) =>
-                tableId
-                  ? o.tableCode?.toLowerCase() === tableId.toLowerCase()
-                  : true
-              ).length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                  <p className="text-gray-500 text-lg">No orders yet</p>
-                  {tableId && (
-                    <p className="text-gray-400 text-sm mt-2">
-                      for Table {tableId.toUpperCase()}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                orders
-                  .filter((o) =>
-                    tableId
-                      ? o.tableCode?.toLowerCase() === tableId.toLowerCase()
-                      : true
-                  )
-                  .map((order) => {
-                    const statusDetails = getOrderStatusDetails(order.status);
-                    const StatusIcon = statusDetails.icon;
-                    return (
-                      <div
-                        key={order.orderId}
-                        className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200"
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <p className="text-2xl font-bold text-gray-900">
-                              {order.orderNumber || order.orderId?.slice(0, 8) || "N/A"}
-                            </p>
-                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                              <span>
-                                {typeof order.createdAt === "string"
-                                  ? order.createdAt
-                                  : ""}
-                              </span>
-                              {order.tableCode && (
-                                <>
-                                  <span>•</span>
-                                  <div className="flex items-center gap-1">
-                                    <MapPin className="w-3 h-3" />
-                                    <span className="font-semibold text-orange-600">
-                                      Table {order.tableCode}
-                                    </span>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          <div
-                            className={`${statusDetails.bg} ${statusDetails.color} px-4 py-2 rounded-full font-semibold flex items-center gap-2`}
-                          >
-                            <StatusIcon className="w-5 h-5" />
-                            {statusDetails.text}
-                          </div>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="mb-4">
-                          <div className="flex justify-between mb-2">
-                            <div
-                              className={`flex flex-col items-center ${["pending", "preparing", "served", "paid"].includes(order.status)
-                                ? "text-orange-600"
-                                : "text-gray-400"
-                                }`}
-                            >
-                              <Clock className="w-6 h-6 mb-1" />
-                              <span className="text-xs">Received</span>
-                            </div>
-                            <div
-                              className={`flex flex-col items-center ${["preparing", "served", "paid"].includes(order.status)
-                                ? "text-orange-600"
-                                : "text-gray-400"
-                                }`}
-                            >
-                              <ChefHat className="w-6 h-6 mb-1" />
-                              <span className="text-xs">Preparing</span>
-                            </div>
-                            <div
-                              className={`flex flex-col items-center ${order.status === "paid" || order.status === "cancelled"
-                                ? "text-gray-600"
-                                : "text-gray-400"
-                                }`}
-                            >
-                              <Check className="w-6 h-6 mb-1" />
-                              <span className="text-xs">Paid</span>
-                            </div>
-                          </div>
-                          <div className="w-full bg-gray-200 h-2 rounded-full">
-                            <div
-                              className={`h-2 rounded-full transition-all duration-500 ${["paid", "cancelled"].includes(order.status)
-                                ? "bg-gray-600 w-full"
-                                : order.status === "served"
-                                  ? "bg-green-600 w-3/4"
-                                  : order.status === "preparing"
-                                    ? "bg-orange-600 w-1/2"
-                                    : "bg-blue-600 w-1/4"
-                                }`}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg p-4">
-                          <p className="font-semibold mb-2">Items:</p>
-                          {order.items?.map((item: any) => {
-                            const mi = items.find(
-                              (m) => m.id === (item.menuItemId || item.id)
-                            );
-                            return (
-                              <div
-                                key={item.menuItemId || item.id}
-                                className="flex justify-between text-sm mb-1"
-                              >
-                                <span>
-                                  {mi ? `${mi.name} x${item.quantity}` : `x${item.quantity}`}
-                                </span>
-                                <span>
-                                  {mi ? `Rs. ${Number(mi.price) * item.quantity}` : ""}
-                                </span>
-                              </div>
-                            );
-                          })}
-                          <div className="border-t mt-2 pt-2 flex justify-between font-bold">
-                            <span>Total</span>
-                            <span className="text-orange-600">
-                              Rs. {order.totalAmount}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
