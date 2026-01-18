@@ -15,11 +15,31 @@ interface CreateOrderInput {
 }
 
 export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
-    const { tableCode, items, mobileNumber, customerName } = data;
+    const { tableCode, items, mobileNumber, customerName, customerType } = data;
+    let targetTableCode = tableCode;
 
-    // 1. Find Table
-    const table = await prisma.table.findUnique({ where: { tableCode } });
-    if (!table) throw new AppError('Table not found', 404);
+    if (!targetTableCode) {
+        if (customerType === 'ONLINE') targetTableCode = 'ONLINE';
+        else if (customerType === 'WALK_IN') targetTableCode = 'WALK-IN';
+        else throw new AppError('Table code is required', 400);
+    }
+
+    // 1. Find or Create Table (Virtual if needed)
+    let table = await prisma.table.findUnique({ where: { tableCode: targetTableCode } });
+    if (!table) {
+        if (customerType === 'ONLINE' || customerType === 'WALK_IN') {
+            const { v4: uuidv4 } = await import('uuid');
+            table = await prisma.table.create({
+                data: {
+                    tableCode: targetTableCode,
+                    tableType: customerType as any,
+                    qrToken: uuidv4(),
+                }
+            });
+        } else {
+            throw new AppError('Table not found', 404);
+        }
+    }
 
     // 2. Check for OPEN (pending/preparing) order.
     const activeStatuses: any[] = ['pending', 'preparing', 'served'];
@@ -85,7 +105,7 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
         where: { id: order.id },
         data: { totalAmount: currentTotal }
     });
-    
+
     try {
         await import('./inventory.service.js').then(s => s.deductStockForOrderService(order.id, items));
     } catch (err) {
@@ -96,19 +116,42 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
         const { getIO } = await import('../socket.ts');
         const io = getIO();
         const eventName = order.items.length === items.length ? 'order:new' : 'order:updated'; // Simple heuristic, refine if needed
-        
-        io.emit('order:updated', { 
-            orderId: order.id, 
-            tableCode, 
+
+        io.emit(eventName, {
+            orderId: order.id,
+            tableCode,
             totalAmount: currentTotal,
-            items: order.items 
+            items: order.items
         });
 
-       
-        
+
+
     } catch (err) {
         console.error("Socket emit failed:", err);
     }
 
     return { message: 'Order placed successfully', orderId: order.id };
+};
+
+export const getOrderService = async (id: string) => {
+    const order = await prisma.order.findUnique({
+        where: { id },
+        include: {
+            items: {
+                include: {
+                    menuItem: {
+                        select: {
+                            name: true,
+                            price: true,
+                            isVeg: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!order) throw new AppError('Order not found', 404);
+
+    return { order };
 };

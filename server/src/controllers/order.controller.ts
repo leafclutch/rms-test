@@ -10,3 +10,14 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
         next(error);
     }
 };
+
+export const getOrder = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        if (!id || typeof id !== 'string') throw new Error('Order ID is required');
+        const result = await orderService.getOrderService(id);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
