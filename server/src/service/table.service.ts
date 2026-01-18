@@ -1,8 +1,6 @@
 import prisma from '../config/prisma.ts';
 import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
-import fs from 'fs';
 import { AppError } from '../utils/appError.ts';
 import { TableType } from '@prisma/client';
 
@@ -23,25 +21,12 @@ export const generateQRService = async ({ tableCode }: { tableCode: string }) =>
         });
     }
 
-    // Format: FRONTEND_URL/menu?table=tableCode
+    // Format: FRONTEND_URL/menu/tableCode
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const qrData = `${frontendUrl}/menu/${table.tableCode}`;
 
-    // Generate QR Code File
-    const qrFileName = `${table.tableCode}.png`;
-    const qrDir = path.join(process.cwd(), 'public', 'qrcodes');
-    const qrFilePath = path.join(qrDir, qrFileName);
-
-    // Ensure directory exists
-    if (!fs.existsSync(qrDir)) {
-        fs.mkdirSync(qrDir, { recursive: true });
-    }
-
-    // Save to file
-    await QRCode.toFile(qrFilePath, qrData);
-
-    // URL to access the file
-    const qrImage = `/public/qrcodes/${qrFileName}`;
+    // Generate QR Code as Base64 (Production Safe)
+    const qrImage = await QRCode.toDataURL(qrData);
 
     return {
         message: 'QR Code generated successfully',
