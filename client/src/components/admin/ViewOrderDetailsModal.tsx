@@ -29,6 +29,10 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newCustomerName, setNewCustomerName] = useState('');
 
+    // Mixed Payment State
+    const [mixedCash, setMixedCash] = useState<number>(0);
+    const [mixedOnline, setMixedOnline] = useState<number>(0);
+
     useEffect(() => {
         if (order) {
             const baseAmount = Number(order.totalAmount ?? order.finalAmount ?? 0);
@@ -51,6 +55,25 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
         }
         setFinalAmount(Math.max(0, calculated));
     }, [discountValue, discountType, order]);
+
+    // Reset mixed payment entries when switching to Mixed
+    useEffect(() => {
+        if (paymentMethod === 'MIXED') {
+            setMixedCash(0);
+            setMixedOnline(0);
+        }
+    }, [paymentMethod]);
+
+    const handleMixedChange = (type: 'cash' | 'online', value: string) => {
+        const val = parseFloat(value) || 0;
+        if (type === 'cash') {
+            setMixedCash(val);
+            setMixedOnline(Math.max(0, finalAmount - val));
+        } else {
+            setMixedOnline(val);
+            setMixedCash(Math.max(0, finalAmount - val));
+        }
+    };
 
     const baseAmount = order ? Number(order.totalAmount ?? order.finalAmount ?? 0) : 0;
     const currentDiscountValue = typeof discountValue === 'number' ? discountValue : 0;
@@ -113,7 +136,12 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
 
             if (paymentMethod === 'CASH') await payCash(payload);
             else if (paymentMethod === 'ONLINE') await payOnline(payload);
-            else if (paymentMethod === 'MIXED') await payMixed({ ...payload, cashAmount: finalAmount / 2, onlineAmount: finalAmount / 2 });
+            else if (paymentMethod === 'MIXED') {
+                if (Math.abs(mixedCash + mixedOnline - finalAmount) > 1) {
+                    return toast.error(`Total must equal Rs. ${finalAmount}`);
+                }
+                await payMixed({ ...payload, cashAmount: mixedCash, onlineAmount: mixedOnline });
+            }
             else if (paymentMethod === 'CREDIT') await payCredit(payload);
 
             toast.success('Payment saved');
@@ -195,7 +223,7 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
                         margin-bottom: 15px;
                     }
                     .header img { 
-                        width: 100%;
+                        width: 50%;
                         height: auto; 
                         margin-bottom: 5px;
                         object-fit: contain;
@@ -493,6 +521,43 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
                                     </button>
                                 ))}
                             </div>
+
+                            {/* Mixed Payment Inputs */}
+                            {paymentMethod === 'MIXED' && (
+                                <div className="p-4 border rounded-xl bg-orange-50 shadow-sm space-y-3 animate-in fade-in slide-in-from-top-2">
+                                    <p className="text-xs text-orange-800 font-medium bg-orange-100 p-2 rounded">
+                                        Mixed payment is split and added to Cash and Online daily totals respectively.
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-700 mb-1 block">Cash Amount</label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">Rs.</span>
+                                                <input
+                                                    type="number"
+                                                    value={mixedCash === 0 ? '' : mixedCash}
+                                                    onChange={(e) => handleMixedChange('cash', e.target.value)}
+                                                    placeholder="0"
+                                                    className="w-full pl-8 pr-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-orange-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-700 mb-1 block">Online Amount</label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">Rs.</span>
+                                                <input
+                                                    type="number"
+                                                    value={mixedOnline === 0 ? '' : mixedOnline}
+                                                    onChange={(e) => handleMixedChange('online', e.target.value)}
+                                                    placeholder="0"
+                                                    className="w-full pl-8 pr-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-orange-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Credit Customer Search */}
                             {paymentMethod === 'CREDIT' && (
