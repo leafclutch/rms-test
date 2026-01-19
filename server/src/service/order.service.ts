@@ -99,15 +99,12 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
     if (!order) throw new AppError('Failed to create or retrieve order', 500);
 
     // Add Items
-    let currentTotal = Number(order.totalAmount);
-
     for (const item of items) {
         // Fetch price
         const menuItem = await prisma.menuItem.findUnique({ where: { id: item.menuItemId } });
         if (!menuItem) continue;
 
         const price = Number(menuItem.price);
-        const lineTotal = price * item.quantity;
 
         // Upsert OrderItem: If same item exists in order, increment qty
         const existingItem = await prisma.orderItem.findFirst({
@@ -129,13 +126,21 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
                 }
             });
         }
-
-        currentTotal += lineTotal;
     }
+
+    // Recalculate total from scratch to ensure accuracy and prevent double counting
+    const allItems = await prisma.orderItem.findMany({
+        where: { orderId: order.id },
+        select: { priceSnapshot: true, quantity: true }
+    });
+
+    const calculatedTotal = allItems.reduce((acc, item) => {
+        return acc + (Number(item.priceSnapshot) * item.quantity);
+    }, 0);
 
     await prisma.order.update({
         where: { id: order.id },
-        data: { totalAmount: currentTotal }
+        data: { totalAmount: calculatedTotal }
     });
 
     try {
