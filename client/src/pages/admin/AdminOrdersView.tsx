@@ -44,13 +44,11 @@ const AdminOrdersView = () => {
         return matchesDate && matchesTable;
     });
 
-    // Calculate Sales Summary (Always from History/Paid Orders for selected date)
-    const ordersForSummary = isHistoryMode ? displayedOrders : (historyOrders || []).filter(order => {
+    // Calculate Sales Summary (Always from History/Paid Orders for selected date, IGNORING table filter)
+    const ordersForSummary = (historyOrders || []).filter(order => {
         const orderDate = new Date(order.createdAt || Date.now()).toISOString().split('T')[0];
         const matchesDate = !filterDate || orderDate === filterDate;
-        const tableCode = order.table?.tableCode || order.tableNumber || "";
-        const matchesTable = filterTable === 'all' || tableCode === filterTable;
-        return matchesDate && matchesTable;
+        return matchesDate;
     });
 
     useEffect(() => {
