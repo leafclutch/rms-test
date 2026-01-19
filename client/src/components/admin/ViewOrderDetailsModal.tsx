@@ -175,15 +175,15 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
             <head>
                 <title>Invoice #${orderTitle}</title>
                 <style>
-                    @page { size: A4; margin: 1cm; }
+                    @page { size: auto; margin: 5mm; }
                     body { 
                         font-family: 'Helvetica', 'Arial', sans-serif; 
                         color: #333;
-                        line-height: 1.4;
+                        line-height: 1.3;
                         margin: 0;
                         padding: 10px;
                         width: 100%;
-                        max-width: 210mm; /* A4 width */
+                        max-width: 130mm; /* Narrower width */
                         margin: 0 auto; 
                     }
                     .header { 
@@ -195,10 +195,27 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
                         margin-bottom: 15px;
                     }
                     .header img { 
-                        max-width: 50%;         /* Smaller logo */
+                        width: 100%;
                         height: auto; 
                         margin-bottom: 5px;
                         object-fit: contain;
+                        display: block;
+                    }
+                    .header h2 { 
+                        margin: 5px 0 0; 
+                        font-size: 18px; 
+                        font-weight: bold; 
+                        color: #1a1a1a;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        text-align: center;
+                    }
+                    .header p { 
+                        margin: 2px 0 0; 
+                        font-size: 13px; 
+                        color: #444; 
+                        font-weight: 500;
+                        text-align: center;
                     }
                     .header h1 { 
                         margin: 0; 
@@ -257,6 +274,7 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
                     }
                     .text-right { text-align: right; }
                     .text-center { text-align: center; }
+                    .nowrap { white-space: nowrap; }
                     
                     .summary-section {
                         display: flex;
@@ -297,7 +315,8 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
             <body>
                 <div class="header">
                     ${logoDataUrl ? `<img src="${logoDataUrl}" alt="RMS Logo" />` : ''}
-                    <p>Om Satiya-4 , Rupandehi | +977 9817513493</p>
+                    <h2>Aaradhya Restaurant</h2>
+                    <p>Mob: 9857042493, 9857045493</p>
                 </div>
 
                 <div class="invoice-info">
@@ -319,10 +338,10 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
                     <thead>
                         <tr>
                             <th style="width: 5%">#</th>
-                            <th style="width: 45%">Item Description</th>
-                            <th class="text-center" style="width: 15%">Qty</th>
-                            <th class="text-right" style="width: 15%">Unit Price</th>
-                            <th class="text-right" style="width: 20%">Total</th>
+                            <th style="width: 35%">Item Description</th>
+                            <th class="text-center" style="width: 10%">Qty</th>
+                            <th class="text-right nowrap" style="width: 25%">Unit Price</th>
+                            <th class="text-right nowrap" style="width: 25%">Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -331,8 +350,8 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
                                 <td>${index + 1}</td>
                                 <td>${i.menuItem.name}</td>
                                 <td class="text-center">${i.quantity}</td>
-                                <td class="text-right">Rs. ${Number(i.menuItem.price).toFixed(2)}</td>
-                                <td class="text-right">Rs. ${(Number(i.menuItem.price) * i.quantity).toFixed(2)}</td>
+                                <td class="text-right nowrap">Rs. ${Number(i.menuItem.price).toFixed(2)}</td>
+                                <td class="text-right nowrap">Rs. ${(Number(i.menuItem.price) * i.quantity).toFixed(2)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
