@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Printer, Receipt, Search, CheckCircle, XCircle, UserPlus, Minus, Plus, Trash2 } from 'lucide-react';
+import logo from '../../assets/logo.png';
 import { payCash, payOnline, payMixed, payCredit } from '../../api/payment';
 import { searchCreditAccountByPhone, createCreditAccount } from '../../api/credit';
 import type { Order, PaymentMethod, DiscountType } from '../../types/order';
@@ -135,34 +136,234 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
         await updateOrderItem(order.id, itemId, action);
     };
 
-    const handlePrint = () => {
+
+
+    // ... existing code ...
+
+    const handlePrint = async () => {
         if (!order) return;
+
+        // Helper to convert image to base64
+        const getBase64FromUrl = async (url: string): Promise<string> => {
+            const data = await fetch(url);
+            const blob = await data.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = () => {
+                    const base64data = reader.result;
+                    resolve(base64data as string);
+                };
+            });
+        };
+
+        let logoDataUrl = '';
+        try {
+            logoDataUrl = await getBase64FromUrl(logo);
+        } catch (e) {
+            console.error("Failed to load logo", e);
+        }
+
         const printWindow = window.open('', '_blank');
         if (!printWindow) return;
         const orderTitle = order.orderNumber || order.id.slice(0, 8);
         const tableLabel = order.table?.tableCode || order.tableNumber;
+        const orderDate = new Date(order.createdAt || Date.now()).toLocaleString();
 
         printWindow.document.write(`
             <html>
-            <head><title>Receipt #${orderTitle}</title><style>
-                body { font-family: sans-serif; padding: 20px; font-size: 14px; }
-                .text-center { text-align: center; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; }
-                .total { text-align: right; margin-top: 10px; font-weight: bold; }
-            </style></head>
+            <head>
+                <title>Invoice #${orderTitle}</title>
+                <style>
+                    @page { size: A4; margin: 1cm; }
+                    body { 
+                        font-family: 'Helvetica', 'Arial', sans-serif; 
+                        color: #333;
+                        line-height: 1.4;
+                        margin: 0;
+                        padding: 10px;
+                        width: 100%;
+                        max-width: 210mm; /* A4 width */
+                        margin: 0 auto; 
+                    }
+                    .header { 
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        border-bottom: 2px solid #eee;
+                        padding-bottom: 10px;
+                        margin-bottom: 15px;
+                    }
+                    .header img { 
+                        max-width: 50%;         /* Smaller logo */
+                        height: auto; 
+                        margin-bottom: 5px;
+                        object-fit: contain;
+                    }
+                    .header h1 { 
+                        margin: 0; 
+                        font-size: 24px; 
+                        color: #1a1a1a;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                    .header p { 
+                        margin: 5px 0 0; 
+                        font-size: 14px; 
+                        color: #666; 
+                    }
+          /* ... styles kept same ... */
+                    .invoice-info {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 30px;
+                    }
+                    .info-block h3 {
+                        font-size: 14px;
+                        text-transform: uppercase;
+                        color: #888;
+                        margin: 0 0 10px;
+                        border-bottom: 1px solid #eee;
+                        padding-bottom: 5px;
+                    }
+                    .info-block p {
+                        margin: 0 0 5px;
+                        font-size: 14px;
+                    }
+                    .info-block p span {
+                        font-weight: bold;
+                        color: #333;
+                    }
+
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin-bottom: 30px; 
+                        font-size: 14px;
+                    }
+                    th { 
+                        background-color: #f8f9fa;
+                        color: #333;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                        font-size: 12px;
+                        padding: 12px 15px;
+                        text-align: left;
+                        border-bottom: 2px solid #ddd;
+                    }
+                    td { 
+                        padding: 12px 15px;
+                        border-bottom: 1px solid #eee;
+                    }
+                    .text-right { text-align: right; }
+                    .text-center { text-align: center; }
+                    
+                    .summary-section {
+                        display: flex;
+                        justify-content: flex-end;
+                    }
+                    .totals { 
+                        width: 300px;
+                        background: #f8f9fa;
+                        padding: 20px;
+                        border-radius: 4px;
+                    }
+                    .totals p { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        margin: 0 0 10px;
+                        font-size: 14px;
+                    }
+                    .totals .grand-total { 
+                        font-weight: bold; 
+                        font-size: 18px; 
+                        color: #000;
+                        margin-top: 15px; 
+                        padding-top: 15px;
+                        border-top: 2px solid #ddd;
+                        margin-bottom: 0;
+                    }
+                    
+                    .footer { 
+                        text-align: center; 
+                        margin-top: 50px; 
+                        padding-top: 20px;
+                        border-top: 1px solid #eee;
+                        font-size: 12px;
+                        color: #888;
+                    }
+                </style>
+            </head>
             <body>
-                <h2 class="text-center">Order Receipt</h2>
-                <p>Order ID: #${orderTitle} | Table: ${tableLabel || 'N/A'}</p>
-                <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>
-                    ${order.items.map(i => `<tr><td>${i.menuItem.name}</td><td>${i.quantity}</td><td>${Number(i.menuItem.price).toFixed(2)}</td><td>${(Number(i.menuItem.price) * i.quantity).toFixed(2)}</td></tr>`).join('')}
-                </tbody></table>
-                <div class="total">Subtotal: Rs. ${baseAmount.toFixed(2)}<br>
-                ${currentDiscountValue > 0 ? `Discount: -Rs. ${discountAmount.toFixed(2)}<br>` : ''}
-                Final Total: Rs. ${finalAmount.toFixed(2)}</div>
-                <p class="text-center" style="margin-top: 20px;">Thank you!</p>
-                <script>window.print(); setTimeout(() => window.close(), 500);</script>
-            </body></html>
+                <div class="header">
+                    ${logoDataUrl ? `<img src="${logoDataUrl}" alt="RMS Logo" />` : ''}
+                    <p>Om Satiya-4 , Rupandehi | +977 9817513493</p>
+                </div>
+
+                <div class="invoice-info">
+                    <div class="info-block" style="flex: 1;">
+                        <h3>Order Details</h3>
+                        <p>Order #: <span>${orderTitle}</span></p>
+                        <p>Date: <span>${orderDate}</span></p>
+                        <p>Payment: <span>${(order.paymentMethod || paymentMethod || 'CASH')}</span></p>
+                    </div>
+                    <div class="info-block" style="text-align: right; flex: 1;">
+                        <h3>Customer Info</h3>
+                        <p>Table: <span>${tableLabel || 'Walk-in'}</span></p>
+                        ${order.customerName ? `<p>Customer: <span>${order.customerName}</span></p>` : ''}
+                        ${order.customerPhone ? `<p>Phone: <span>${order.customerPhone}</span></p>` : ''}
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 45%">Item Description</th>
+                            <th class="text-center" style="width: 15%">Qty</th>
+                            <th class="text-right" style="width: 15%">Unit Price</th>
+                            <th class="text-right" style="width: 20%">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.items.map((i, index) => `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${i.menuItem.name}</td>
+                                <td class="text-center">${i.quantity}</td>
+                                <td class="text-right">Rs. ${Number(i.menuItem.price).toFixed(2)}</td>
+                                <td class="text-right">Rs. ${(Number(i.menuItem.price) * i.quantity).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div class="summary-section">
+                    <div class="totals">
+                        <p><span>Subtotal:</span> <span>Rs. ${baseAmount.toFixed(2)}</span></p>
+                        ${currentDiscountValue > 0 ? `<p><span>Discount:</span> <span>-Rs. ${discountAmount.toFixed(2)}</span></p>` : ''}
+                        <p class="grand-total"><span>Total Amount:</span> <span>Rs. ${finalAmount.toFixed(2)}</span></p>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p>Thank you for dining with us!</p>
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        setTimeout(() => {
+                            window.print(); 
+                            setTimeout(() => window.close(), 500);
+                        }, 500);
+                    };
+                    setTimeout(() => {
+                        window.print(); 
+                        setTimeout(() => window.close(), 500);
+                    }, 1000);
+                </script>
+            </body>
+            </html>
         `);
         printWindow.document.close();
     };
