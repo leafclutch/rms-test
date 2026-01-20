@@ -253,7 +253,10 @@ export const processCreditPayment = async ({ orderId, customerPhone }: PaymentPa
                 status: OrderStatus.paid,
                 paymentMethod: PaymentMethod.CREDIT,
                 customerId: customer!.id,
-                dueAmount: 0, // Order is financially closed; debt tracks in Customer ledger
+                dueAmount: 0, // Order is financially closed regarding immediate payment? No, user wants to track per order. 
+                // Actually user said: "when customer settle ... the credit of yesterday should be reduced"
+                // So we set creditAmount here to track the debt related to this order.
+                creditAmount: finalAmount,
                 cashAmount: 0,
                 onlineAmount: 0
             }

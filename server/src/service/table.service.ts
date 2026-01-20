@@ -21,10 +21,10 @@ const getNextTableCode = async (tableType: TableType): Promise<string> => {
             prefix = 'T';
             break;
         case 'WALK_IN':
-            prefix = 'C';
+            prefix = 'W';
             break;
         case 'ONLINE':
-            prefix = 'O';
+            prefix = 'WEB';
             break;
         default:
             throw new AppError('Invalid table type', 400);
@@ -65,14 +65,14 @@ export const getAllTablesService = async () => {
     const sortByTableCode = (a: any, b: any) => {
         const parsedA = parseTableCode(a.tableCode);
         const parsedB = parseTableCode(b.tableCode);
-        
+
         if (!parsedA || !parsedB) return 0;
-        
+
         // First sort by prefix
         if (parsedA.prefix !== parsedB.prefix) {
             return parsedA.prefix.localeCompare(parsedB.prefix);
         }
-        
+
         // Then sort by number
         return parsedA.number - parsedB.number;
     };
@@ -131,6 +131,19 @@ export const generateQRService = async ({ tableCode, tableType }: { tableCode?: 
                 qrToken: uuidv4(),
             },
         });
+    } else {
+        // Fix for legacy data: Ensure T*, C*, O* are always PHYSICAL
+        // The user requirement says "in backend all are register as Physical table"
+        const upperCode = finalTableCode.toUpperCase();
+        if (
+            (upperCode.startsWith('T') || upperCode.startsWith('C') || upperCode.startsWith('O')) &&
+            table.tableType !== 'PHYSICAL'
+        ) {
+            table = await prisma.table.update({
+                where: { id: table.id },
+                data: { tableType: 'PHYSICAL' }
+            });
+        }
     }
 
     // Format: FRONTEND_URL/menu/tableCode

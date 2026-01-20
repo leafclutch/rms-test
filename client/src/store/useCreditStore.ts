@@ -19,7 +19,7 @@ interface CreditStore {
   addCreditTransaction: (
     customerId: string,
     transaction: Omit<CreditTransaction, 'id' | 'timestamp' | 'balance'>
-  ) => CreditTransaction;
+  ) => Promise<CreditTransaction>;
 
   settleDebt: (customerId: string, amount: number, notes?: string) => Promise<void>;
   getCreditHistory: (customerId: string) => CreditTransaction[];
@@ -57,23 +57,23 @@ export const useCreditStore = create<CreditStore>((set, get) => ({
     try {
       const response = await getCustomerDetails(id);
       const data = response.data;
-      
+
       // Map transactions and calculate balances
       // Backend returns ledger ordered by desc (newest first)
       let currentBalance = Number(data.totalDue);
-      
+
       const creditHistory: CreditTransaction[] = (data.ledger || []).map((txn: any) => {
         const type = txn.type === 'PAYMENT' ? 'payment' : 'debt';
         const amount = Number(txn.amount);
-        
+
         // The balance after this transaction was applied
         const balanceSnapshot = currentBalance;
-        
+
         // Calculate balance *before* this transaction for the *next* iteration (which is the previous transaction in time)
         if (type === 'debt') {
-             currentBalance -= amount;
+          currentBalance -= amount;
         } else {
-             currentBalance += amount;
+          currentBalance += amount;
         }
 
         return {
@@ -101,7 +101,7 @@ export const useCreditStore = create<CreditStore>((set, get) => ({
 
       // Update the specific customer in the store
       set(state => ({
-        customers: state.customers.map(c => 
+        customers: state.customers.map(c =>
           c.id === id ? {
             ...c,
             totalCredit: Number(data.totalDue),
@@ -181,33 +181,48 @@ export const useCreditStore = create<CreditStore>((set, get) => ({
       c.phone.includes(query)
     ),
 
-  addCreditTransaction: (customerId, transactionData) => {
+  addCreditTransaction: async (customerId, transactionData) => {
     const customer = get().customers.find(c => c.id === customerId);
     if (!customer) throw new Error('Customer not found');
 
-    const transaction: CreditTransaction = {
-      ...transactionData,
-      id: `txn-${Date.now()}`,
-      timestamp: new Date(),
-      balance:
-        transactionData.type === 'debt'
-          ? customer.totalCredit + transactionData.amount
-          : customer.totalCredit - transactionData.amount
-    };
+    try {
+      // Call backend API to persist the debt
+      const response = await import('../api/credit').then(api =>
+        api.addDebt(customerId, transactionData.amount, transactionData.notes)
+      );
 
-    set(state => ({
-      customers: state.customers.map(c =>
-        c.id === customerId
-          ? {
-            ...c,
-            totalCredit: transaction.balance,
-            creditHistory: [transaction, ...c.creditHistory] // Add to start
-          }
-          : c
-      )
-    }));
+      const newBalance = Number(response.data.updatedCustomer.totalDue);
+      const txn = response.data.transaction;
 
-    return transaction;
+      const transaction: CreditTransaction = {
+        id: txn.id,
+        customerId: txn.customerId,
+        orderId: txn.orderId,
+        type: 'debt',
+        amount: Number(txn.amount),
+        balance: newBalance,
+        notes: txn.description,
+        timestamp: new Date(txn.createdAt)
+      };
+
+      set(state => ({
+        customers: state.customers.map(c =>
+          c.id === customerId
+            ? {
+              ...c,
+              totalCredit: newBalance,
+              creditHistory: [transaction, ...c.creditHistory]
+            }
+            : c
+        )
+      }));
+
+      return transaction;
+    } catch (error: any) {
+      console.error('Failed to add credit transaction:', error);
+      toast.error('Failed to record debt');
+      throw error;
+    }
   },
 
   settleDebt: async (customerId, amount, notes) => {

@@ -135,6 +135,7 @@ model Order {
 
   cashAmount       Decimal       @default(0)
   onlineAmount     Decimal       @default(0)
+  creditAmount     Decimal       @default(0)
 
   paymentMethod    PaymentMethod?
   paymentDetails   String?

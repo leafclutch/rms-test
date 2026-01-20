@@ -50,6 +50,7 @@ export const WalkInOrder: React.FC = () => {
   const [allItems, setAllItems] = useState<MenuItem[]>([]);
   const originalCustomerNameRef = useRef(currentOrder?.customerName || '');
   const [customerName, setCustomerName] = useState(currentOrder?.customerName || '');
+  const [mobileNumber, setMobileNumber] = useState(currentOrder?.customerPhone || '');
   const [isEditingCustomer, setIsEditingCustomer] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -70,17 +71,18 @@ export const WalkInOrder: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAll, fetchOrders, initializeSocket, fetchCreditCustomers]);
 
+  // Lookup customer by phone
   useEffect(() => {
-    if (isEditingCustomer && customerName.length >= 7) {
+    if (isEditingCustomer && mobileNumber.length >= 7) {
       const matched = customers.find((c: Customer) =>
-        c.phone === customerName ||
-        c.phone.replace(/\D/g, '') === customerName.replace(/\D/g, '')
+        c.phone === mobileNumber ||
+        c.phone.replace(/\D/g, '') === mobileNumber.replace(/\D/g, '')
       );
       setFoundCustomer(matched || null);
     } else {
       setFoundCustomer(null);
     }
-  }, [customerName, customers, isEditingCustomer]);
+  }, [mobileNumber, customers, isEditingCustomer]);
 
   // Sync filtered items whenever store updates
   useEffect(() => {
@@ -111,9 +113,10 @@ export const WalkInOrder: React.FC = () => {
     ) {
       originalCustomerNameRef.current = currentOrder.customerName;
       setCustomerName(currentOrder.customerName);
+      setMobileNumber(currentOrder.customerPhone || '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrder?.customerName]);
+  }, [currentOrder?.customerName, currentOrder?.customerPhone]);
 
   // Sync customer from URL query
   const [searchParams] = useSearchParams();
@@ -164,11 +167,9 @@ export const WalkInOrder: React.FC = () => {
   };
 
   const handleSaveCustomerName = () => {
-    const finalName = foundCustomer ? foundCustomer.name : customerName.trim();
-    setCustomerName(finalName);
-    if (currentOrder) {
-      updateOrder(currentOrder.id, { customerName: finalName || undefined });
-      originalCustomerNameRef.current = finalName;
+    if (foundCustomer) {
+      setCustomerName(foundCustomer.name);
+      setMobileNumber(foundCustomer.phone);
     }
     setIsEditingCustomer(false);
     setFoundCustomer(null);
@@ -193,6 +194,7 @@ export const WalkInOrder: React.FC = () => {
       const newOrder = {
         customerType: "WALK_IN" as "WALK_IN",
         customerName: customerName.trim() || "Walk-in Customer",
+        mobileNumber: mobileNumber.trim() || undefined,
         items: cartItems.map(item => ({
           id: item.id,
           name: item.name,
@@ -258,44 +260,62 @@ export const WalkInOrder: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-orange-600">
                     {customerName || 'Walk-in Customer'}
+                    {mobileNumber && <span className="text-gray-400 font-normal ml-1">({mobileNumber})</span>}
                   </span>
                   <button onClick={() => setIsEditingCustomer(true)} className="text-blue-600 hover:underline">
                     <SquarePen size={16} />
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 relative">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 relative">
+                  <input
+                    value={mobileNumber}
+                    onChange={(e) => setMobileNumber(e.target.value)}
+                    className="border-2 border-orange-300 rounded-md px-2 py-1 text-sm focus:border-orange-500 outline-none w-40"
+                    placeholder="Mobile Number"
+                    autoFocus
+                  />
                   <input
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="border-2 border-orange-300 rounded-md px-2 py-1 text-sm focus:border-orange-500 outline-none"
-                    placeholder="Name or Phone"
-                    autoFocus
+                    className="border-2 border-gray-200 rounded-md px-2 py-1 text-sm focus:border-orange-500 outline-none w-40"
+                    placeholder="Customer Name"
                   />
                   {foundCustomer && (
                     <div className="absolute top-full left-0 mt-1 p-2 bg-white border-2 border-green-500 rounded-lg shadow-lg z-50 min-w-[200px]">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        <div>
-                          <p className="font-bold text-xs">Found Account</p>
-                          <p className="text-sm font-semibold text-gray-900">{foundCustomer.name}</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <div>
+                            <p className="font-bold text-[10px] text-green-600 uppercase">Existing Customer</p>
+                            <p className="text-sm font-semibold text-gray-900">{foundCustomer.name}</p>
+                          </div>
                         </div>
+                        <button
+                          onClick={handleSaveCustomerName}
+                          className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                        >
+                          Use This
+                        </button>
                       </div>
                     </div>
                   )}
-                  <button onClick={handleSaveCustomerName} className="text-green-600 hover:bg-green-50 p-1 rounded-md">
-                    <Check size={16} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCustomerName(originalCustomerNameRef.current);
-                      setIsEditingCustomer(false);
-                      setFoundCustomer(null);
-                    }}
-                    className="text-red-500 hover:bg-red-50 p-1 rounded-md"
-                  >
-                    <X size={16} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={handleSaveCustomerName} className="text-green-600 hover:bg-green-50 p-1 rounded-md">
+                      <Check size={16} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCustomerName(originalCustomerNameRef.current);
+                        setMobileNumber(currentOrder?.customerPhone || '');
+                        setIsEditingCustomer(false);
+                        setFoundCustomer(null);
+                      }}
+                      className="text-red-500 hover:bg-red-50 p-1 rounded-md"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

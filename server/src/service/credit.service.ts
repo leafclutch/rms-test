@@ -76,6 +76,37 @@ export const recordDebtPayment = async (accountId: string, amount: number, descr
             }
         });
 
+        // -----------------------------------------------------
+        // FIFO Settlement Logic: Reduce 'creditAmount' on past orders
+        // -----------------------------------------------------
+        const unpaidOrders = await tx.order.findMany({
+            where: {
+                customerId: accountId,
+                paymentMethod: 'CREDIT',
+                creditAmount: { gt: 0 }
+            },
+            orderBy: { createdAt: 'asc' } // Oldest first
+        });
+
+        let remainingPayment = paymentAmount;
+
+        for (const order of unpaidOrders) {
+            if (remainingPayment <= 0) break;
+
+            const orderCredit = Number(order.creditAmount);
+            const deduct = Math.min(orderCredit, remainingPayment);
+
+            await tx.order.update({
+                where: { id: order.id },
+                data: {
+                    creditAmount: { decrement: deduct }
+                }
+            });
+
+            remainingPayment -= deduct;
+        }
+        // -----------------------------------------------------
+
         // Mock WhatsApp Notification
         console.log(`[WhatsApp Mock] To: ${customer.phoneNumber} | Message: Payment of Rs. ${paymentAmount} received. Your new balance is Rs. ${updatedCustomer.totalDue}.`);
 
@@ -112,4 +143,34 @@ export const deleteAccount = async (accountId: string) => {
     }
 
     return await prisma.customer.delete({ where: { id: accountId } });
+};
+
+export const recordCreditCharge = async (accountId: string, amount: number, description?: string) => {
+    return await prisma.$transaction(async (tx) => {
+        const customer = await tx.customer.findUnique({ where: { id: accountId } });
+        if (!customer) throw new AppError('Customer not found', 404);
+
+        const chargeAmount = Number(amount);
+        if (chargeAmount <= 0) throw new AppError('Charge amount must be greater than 0', 400);
+
+        // Record the transaction
+        const transaction = await tx.creditTransaction.create({
+            data: {
+                customerId: accountId,
+                amount: chargeAmount,
+                type: CreditTransactionType.CHARGE,
+                description: description || 'Manual debt entry'
+            }
+        });
+
+        // Update customer balance
+        const updatedCustomer = await tx.customer.update({
+            where: { id: accountId },
+            data: {
+                totalDue: { increment: chargeAmount }
+            }
+        });
+
+        return { transaction, updatedCustomer };
+    });
 };

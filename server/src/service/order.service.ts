@@ -18,8 +18,38 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
     const { tableCode, items, mobileNumber, customerName, customerType } = data;
     let targetTableCode = tableCode;
 
+    // 1. Resolve Customer Account (if mobile number provided)
+    let customerId: string | undefined = undefined;
+    if (mobileNumber) {
+        const customer = await prisma.customer.findUnique({ where: { phoneNumber: mobileNumber } });
+        if (customer) {
+            customerId = customer.id;
+        }
+    }
+
+    // 2. Intelligent Walk-in Merging
+    if (customerType === 'WALK_IN' && !targetTableCode && (customerId || mobileNumber || customerName)) {
+        // Search for an active order already associated with this customer
+        // We prioritize customerId if found, otherwise name/phone combination
+        const activeWalkInOrder = await prisma.order.findFirst({
+            where: {
+                OR: [
+                    customerId ? { customerId } : {},
+                    mobileNumber ? { customerPhone: mobileNumber } : {},
+                    customerName ? { customerName } : {}
+                ].filter(condition => Object.keys(condition).length > 0),
+                status: { in: ['pending', 'preparing', 'served'] }
+            },
+            include: { table: true }
+        });
+
+        if (activeWalkInOrder) {
+            targetTableCode = activeWalkInOrder.table.tableCode;
+        }
+    }
+
     if (customerType === 'WALK_IN' && !targetTableCode) {
-        // Generate a unique virtual table for each walk-in to prevent merging
+        // Generate a new unique virtual table only if no active order found
         targetTableCode = `WALKIN-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     }
 
@@ -28,12 +58,11 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
         else throw new AppError('Table code is required', 400);
     }
 
-    // 1. Find or Create Table (Virtual if needed)
+    // 3. Find or Create Table (Virtual if needed)
     let table = await prisma.table.findUnique({ where: { tableCode: targetTableCode } });
     if (!table) {
         if (customerType === 'ONLINE' || customerType === 'WALK_IN') {
             const { v4: uuidv4 } = await import('uuid');
-            // Map DINE_IN (if it somehow got here) or others to correct enum
             const tableTypeMap: any = {
                 'DINE_IN': 'PHYSICAL',
                 'WALK_IN': 'WALK_IN',
@@ -52,16 +81,7 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
         }
     }
 
-    // 2. Resolve Customer Account (if mobile number provided)
-    let customerId: string | undefined = undefined;
-    if (mobileNumber) {
-        const customer = await prisma.customer.findUnique({ where: { phoneNumber: mobileNumber } });
-        if (customer) {
-            customerId = customer.id;
-        }
-    }
-
-    // 3. Check for OPEN (pending/preparing/served) order on this table.
+    // 4. Check for OPEN (pending/preparing/served) order on this table.
     const activeStatuses: any[] = ['pending', 'preparing', 'served'];
 
     let order: any = await prisma.order.findFirst({
@@ -72,7 +92,7 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
         include: { items: true }
     });
 
-    // 4. Create or Update
+    // 5. Create or Update
     if (!order) {
         order = await prisma.order.create({
             data: {
@@ -92,13 +112,16 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
                 customerName: customerName ?? order.customerName,
                 customerPhone: mobileNumber ?? order.customerPhone,
                 customerId: customerId ?? order.customerId,
-                // Reset status to pending if it was served, so admin sees "Start Preparing" again for new items
-                status: order.status === 'served' ? 'pending' : order.status
+                // Reset status to pending if it was served or preparing, so admin sees "Start Preparing" again for new items
+                status: (order.status === 'served' || order.status === 'preparing') ? 'pending' : order.status
             }
         });
     }
 
     if (!order) throw new AppError('Failed to create or retrieve order', 500);
+
+    // Track added items for notification
+    const addedItemsForNotify: { name: string; quantity: number }[] = [];
 
     // Add Items
     for (const item of items) {
@@ -128,6 +151,12 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
                 }
             });
         }
+
+        // Add to notification list
+        addedItemsForNotify.push({
+            name: menuItem.name,
+            quantity: item.quantity
+        });
     }
 
     // Recalculate total from scratch to ensure accuracy and prevent double counting
@@ -163,10 +192,6 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
         });
 
         if (updatedOrder) {
-            // If it was just created (status pending and no items until now), it's 'order:new'
-            // Otherwise it's 'order:updated'. 
-            // A more robust way: check if this was the first time items were added to an empty order.
-            // For now, if the original order we found/created was just created (id matches the newly created one), call it 'new'
             const eventName = order.status === 'pending' && (!order.items || order.items.length === 0)
                 ? 'order:new'
                 : 'order:updated';
@@ -176,7 +201,8 @@ export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
                 tableCode: targetTableCode,
                 totalAmount: Number(updatedOrder.totalAmount),
                 items: updatedOrder.items,
-                status: updatedOrder.status
+                status: updatedOrder.status,
+                addedItems: addedItemsForNotify // Send the changes
             });
         }
     } catch (err) {

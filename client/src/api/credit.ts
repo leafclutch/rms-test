@@ -39,6 +39,20 @@ export const settleDebt = async (
   return response.data;
 };
 
+// Add debt to customer account
+export const addDebt = async (
+  customerId: string,
+  amount: number,
+  notes?: string
+) => {
+  const response = await api.post(`/admin/credit-accounts/${customerId}/charge`, {
+    amount,
+    description: notes
+  });
+  return response.data;
+};
+
+
 // Update a customer
 export const updateCustomer = (
   customerId: string,

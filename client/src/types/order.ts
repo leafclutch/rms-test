@@ -30,6 +30,7 @@ export interface Order {
   finalAmount?: number;
   cashAmount?: number;
   onlineAmount?: number;
+  creditAmount?: number;
   items: OrderItem[];
   createdAt?: string;
   updatedAt?: string;

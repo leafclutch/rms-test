@@ -99,6 +99,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
         const payload = {
             customerType: "WALK_IN" as const,
             customerName: order.customerName,
+            customerPhone: order.mobileNumber,
             items: order.items.map((item: any) => ({
                 menuItemId: item?.id,
                 quantity: item.quantity ?? 1,
@@ -141,7 +142,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
         socket.on('order:new', (data) => {
             console.log('New order received via socket:', data);
             if (!get().isHistoryMode) fetchOrders();
-            toast.success('New Order Received!', {
+            toast.success(`New order received for ${data.tableCode}!`, {
                 icon: <Bell className="w-5 h-5 text-orange-500" />,
                 duration: 5000
             });
@@ -152,6 +153,16 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
             console.log('Order update received via socket:', data);
             if (get().isHistoryMode) fetchHistory();
             else fetchOrders();
+
+            // Notify about added items
+            if (data.addedItems && Array.isArray(data.addedItems)) {
+                data.addedItems.forEach((item: { name: string; quantity: number }) => {
+                    toast.success(`${item.name} is added on ${data.tableCode}`, {
+                        icon: <Bell className="w-5 h-5 text-blue-500" />,
+                        duration: 4000
+                    });
+                });
+            }
         });
 
         // Listen for payments

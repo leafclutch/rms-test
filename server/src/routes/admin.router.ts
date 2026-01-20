@@ -24,6 +24,7 @@ router.get('/credit-accounts/:accountId', protect, creditController.getAccountDe
 router.patch('/credit-accounts/:accountId', protect, creditController.updateAccount);
 router.delete('/credit-accounts/:accountId', protect, creditController.deleteAccount);
 router.post('/credit-accounts/:accountId/payment', protect, creditController.recordPayment);
+router.post('/credit-accounts/:accountId/charge', protect, creditController.recordCharge);
 
 
 export default router;

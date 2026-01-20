@@ -6,8 +6,8 @@ export async function getAllTablesApi() {
   return response.data;
 }
 
-export async function createTableApi(tableType: "PHYSICAL" | "WALK_IN" | "ONLINE") {
-  const response = await api.post("/tables/generate-qr", { tableType });
+export async function createTableApi(tableType: "PHYSICAL" | "WALK_IN" | "ONLINE", tableCode?: string) {
+  const response = await api.post("/tables/generate-qr", { tableType, tableCode });
   return response.data;
 }
 
