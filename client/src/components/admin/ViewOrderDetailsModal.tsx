@@ -194,6 +194,20 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
 
         const printWindow = window.open('', '_blank');
         if (!printWindow) return;
+
+        // Calculate amounts for printing - use saved order data if available (for paid orders)
+        const printBaseAmount = Number(order.totalAmount || 0);
+        const printDiscountValue = Number(order.discountValue || 0);
+        const printDiscountType = order.discountType || 'PERCENT';
+
+        // Calculate discount amount
+        const printDiscountAmount = printDiscountType === 'PERCENT'
+            ? (printBaseAmount * printDiscountValue) / 100
+            : printDiscountValue;
+
+        // Calculate final payable amount
+        const printFinalAmount = Math.max(0, printBaseAmount - printDiscountAmount);
+
         const orderTitle = order.orderNumber || order.id.slice(0, 8);
         const tableLabel = order.table?.tableCode || order.tableNumber;
         const orderDate = new Date(order.createdAt || Date.now()).toLocaleString();
@@ -387,9 +401,9 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
 
                 <div class="summary-section">
                     <div class="totals">
-                        <p><span>Subtotal:</span> <span>Rs. ${baseAmount.toFixed(2)}</span></p>
-                        ${currentDiscountValue > 0 ? `<p><span>Discount:</span> <span>-Rs. ${discountAmount.toFixed(2)}</span></p>` : ''}
-                        <p class="grand-total"><span>Total Amount:</span> <span>Rs. ${finalAmount.toFixed(2)}</span></p>
+                        <p><span>Subtotal:</span> <span>Rs. ${printBaseAmount.toFixed(2)}</span></p>
+                        ${printDiscountAmount > 0 ? `<p style="color: #d97706;"><span>Discount (${printDiscountType === 'PERCENT' ? printDiscountValue + '%' : 'Fixed'}):</span> <span>-Rs. ${printDiscountAmount.toFixed(2)}</span></p>` : ''}
+                        <p class="grand-total"><span>Total Payable:</span> <span>Rs. ${printFinalAmount.toFixed(2)}</span></p>
                     </div>
                 </div>
 

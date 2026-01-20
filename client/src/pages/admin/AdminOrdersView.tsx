@@ -24,6 +24,7 @@ const AdminOrdersView = () => {
         isHistoryMode,
         setIsHistoryMode,
         historyOrders,
+        historyDebtSettlements,
     } = useOrderStore();
 
     const [filterDate, setFilterDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -34,7 +35,8 @@ const AdminOrdersView = () => {
     // Advanced Filtering for Display
     const displayedOrders = orders.filter(order => {
         // Date Filter (Compare YYYY-MM-DD)
-        const orderDate = new Date(order.createdAt || Date.now()).toISOString().split('T')[0];
+        const dateObj = new Date(order.createdAt || Date.now());
+        const orderDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
         const matchesDate = !filterDate || orderDate === filterDate;
 
         // Table Filter
@@ -46,7 +48,8 @@ const AdminOrdersView = () => {
 
     // Calculate Sales Summary (Always from History/Paid Orders for selected date, IGNORING table filter)
     const ordersForSummary = (historyOrders || []).filter(order => {
-        const orderDate = new Date(order.createdAt || Date.now()).toISOString().split('T')[0];
+        const dateObj = new Date(order.updatedAt || order.createdAt || Date.now());
+        const orderDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
         const matchesDate = !filterDate || orderDate === filterDate;
         return matchesDate;
     });
@@ -58,23 +61,46 @@ const AdminOrdersView = () => {
 
         const cleanup = initializeSocket();
         return () => cleanup && cleanup();
-    }, [fetchOrders, fetchHistory, initializeSocket, isHistoryMode]);
+    }, [fetchOrders, fetchHistory, initializeSocket, isHistoryMode, filterDate]); // Re-fetch on date change
 
     // Sales Summary Calculation
     const salesSummary = ordersForSummary.reduce((acc, order) => {
-        const total = Number(order.totalAmount || 0);
-        acc.total += total;
+        let cash = Number(order.cashAmount || 0);
+        let online = Number(order.onlineAmount || 0);
+        let credit = Number(order.creditAmount || 0);
 
-        const method = order.paymentMethod;
-        if (method === 'CASH') acc.cash += total;
-        else if (method === 'ONLINE') acc.online += total;
-        else if (method === 'CREDIT') acc.credit += Number(order.creditAmount || 0);
-        else if (method === 'MIXED') {
-            acc.cash += Number(order.cashAmount || 0);
-            acc.online += Number(order.onlineAmount || 0);
+        // Requirement: "show credit only if the credit is on customers account"
+        if (credit > 0 && !order.customerId) {
+            // Fallback: If anonymous credit exists, count it as cash
+            cash += credit;
+            credit = 0;
         }
+
+        acc.cash += cash;
+        acc.online += online;
+        acc.credit += credit;
+
+        // Requirement: "dont add credit ... also dont add amount paid as debt on Total sales"
+        // Direct sales are NOT originally 'CREDIT' settlements.
+        // We only add to 'total' if it's not a settled credit (or if it was anonymous which we treat as cash).
+        if (order.paymentMethod !== 'CREDIT' || !order.customerId) {
+            acc.total += (cash + online);
+        }
+
         return acc;
-    }, { total: 0, cash: 0, online: 0, credit: 0 });
+    }, { total: 0, cash: 0, online: 0, credit: 0, debtSettle: 0 });
+
+    // Apply Debt Settlements for the selected date
+    (historyDebtSettlements || []).forEach(settlement => {
+        try {
+            const dateObj = new Date(settlement.createdAt);
+            if (isNaN(dateObj.getTime())) return;
+            const settleDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+            if (settleDate === filterDate) {
+                salesSummary.debtSettle += Number(settlement.amount);
+            }
+        } catch (e) { console.error("Filter settle date error", e); }
+    });
 
 
 
@@ -200,10 +226,14 @@ const AdminOrdersView = () => {
                             Total Sales (Paid Orders):
                             <span className="text-emerald-600 ml-2">Rs. {salesSummary.total.toFixed(2)}</span>
                         </h3>
-                        <div className="text-sm text-gray-600 flex gap-4">
-                            <span>Cash: <span className="font-semibold">Rs. {salesSummary.cash.toFixed(2)}</span></span>
-                            <span className="text-gray-300">|</span>
-                            <span>Online: <span className="font-semibold">Rs. {salesSummary.online.toFixed(2)}</span></span>
+                        <div className="text-sm text-gray-600 flex flex-wrap gap-4">
+                            <span>Cash: <span className="font-semibold text-gray-800">Rs. {salesSummary.cash.toFixed(2)}</span></span>
+                            <span className="text-gray-300 hidden sm:inline">|</span>
+                            <span>Online: <span className="font-semibold text-gray-800">Rs. {salesSummary.online.toFixed(2)}</span></span>
+                            <span className="text-gray-300 hidden sm:inline">|</span>
+                            <span>Credit: <span className="font-semibold text-red-600">Rs. {salesSummary.credit.toFixed(2)}</span></span>
+                            {/* <span className="text-gray-300 hidden sm:inline">|</span>
+                            <span>Debt Settle: <span className="font-semibold text-emerald-600">Rs. {salesSummary.debtSettle.toFixed(2)}</span></span> */}
                         </div>
                     </div>
                 </div>
@@ -268,6 +298,35 @@ const AdminOrdersView = () => {
                                                     Rs. {order.totalAmount || order.finalAmount || 0}
                                                 </span>
                                             </div>
+
+                                            {order.status === 'paid' && (
+                                                <div className="grid grid-cols-2 gap-2 mb-4 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                                                    {Number(order.cashAmount || 0) > 0 && (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-gray-500 uppercase font-bold">Cash</span>
+                                                            <span className="text-sm font-semibold text-gray-700">Rs. {Number(order.cashAmount).toFixed(0)}</span>
+                                                        </div>
+                                                    )}
+                                                    {Number(order.onlineAmount || 0) > 0 && (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-gray-500 uppercase font-bold">Online</span>
+                                                            <span className="text-sm font-semibold text-blue-700">Rs. {Number(order.onlineAmount).toFixed(0)}</span>
+                                                        </div>
+                                                    )}
+                                                    {Number(order.creditAmount || 0) > 0 && (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-gray-500 uppercase font-bold">Credit</span>
+                                                            <span className="text-sm font-semibold text-red-600">Rs. {Number(order.creditAmount).toFixed(0)}</span>
+                                                        </div>
+                                                    )}
+                                                    {Number(order.settledAmount || 0) > 0 && (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-gray-500 uppercase font-bold">Debt Settle</span>
+                                                            <span className="text-sm font-semibold text-emerald-600">Rs. {Number(order.settledAmount).toFixed(0)}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
 
                                             <div className="flex gap-2">
                                                 {order.status === 'pending' && (

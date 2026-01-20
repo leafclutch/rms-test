@@ -15,6 +15,8 @@ interface OrderStore {
     isLoading: boolean;
     error: string | null;
     isHistoryMode: boolean;
+    historyCreditTransactions: any[];
+    historyDebtSettlements: any[];
 
     fetchOrders: () => Promise<void>;
     fetchHistory: () => Promise<void>;
@@ -41,6 +43,8 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     isLoading: false,
     error: null,
     isHistoryMode: false,
+    historyCreditTransactions: [],
+    historyDebtSettlements: [],
 
     fetchOrders: async () => {
         set({ isLoading: true, error: null });
@@ -79,7 +83,12 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
                 totalAmount: Number(order.totalAmount || order.finalAmount || 0),
                 tableNumber: order.table?.tableCode || order.tableNumber || (order.tableCode ? order.tableCode : undefined)
             }));
-            set({ historyOrders: historyWithDefaults, isLoading: false });
+            set({
+                historyOrders: historyWithDefaults,
+                historyCreditTransactions: data.creditTransactions || [],
+                historyDebtSettlements: data.debtSettlements || [],
+                isLoading: false
+            });
         } catch (error) {
             console.error('Error fetching history:', error);
             set({ error: 'Failed to fetch order history', isLoading: false, historyOrders: [] });

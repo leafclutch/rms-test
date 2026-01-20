@@ -18,6 +18,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   orderNumber?: string;
+  customerId?: string;
   table?: {
     tableCode: string;
     tableType: string;
@@ -31,6 +32,7 @@ export interface Order {
   cashAmount?: number;
   onlineAmount?: number;
   creditAmount?: number;
+  settledAmount?: number;
   items: OrderItem[];
   createdAt?: string;
   updatedAt?: string;

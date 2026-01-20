@@ -96,10 +96,22 @@ export const recordDebtPayment = async (accountId: string, amount: number, descr
             const orderCredit = Number(order.creditAmount);
             const deduct = Math.min(orderCredit, remainingPayment);
 
-            await tx.order.update({
+            await (tx as any).order.update({
                 where: { id: order.id },
                 data: {
-                    creditAmount: { decrement: deduct }
+                    creditAmount: { decrement: deduct },
+                    settledAmount: { increment: deduct }
+                }
+            });
+
+            // Record settlement (using any cast for newly added model)
+            await (tx as any).debtSettlement.create({
+                data: {
+                    customerId: accountId,
+                    orderId: order.id,
+                    amount: deduct,
+                    method: 'CASH',
+                    description: `Settlement for Order #${order.id.slice(0, 8)}`
                 }
             });
 
@@ -107,8 +119,13 @@ export const recordDebtPayment = async (accountId: string, amount: number, descr
         }
         // -----------------------------------------------------
 
-        // Mock WhatsApp Notification
-        console.log(`[WhatsApp Mock] To: ${customer.phoneNumber} | Message: Payment of Rs. ${paymentAmount} received. Your new balance is Rs. ${updatedCustomer.totalDue}.`);
+        // Emit socket event to refresh admin dashboards
+        try {
+            const { getIO } = await import('../socket.ts');
+            getIO().emit('order:paid', { customerId: accountId });
+        } catch (e) {
+            console.error("Socket emit failed in recordDebtPayment", e);
+        }
 
         return { transaction, updatedCustomer };
     });

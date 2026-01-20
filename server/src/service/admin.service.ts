@@ -149,15 +149,23 @@ export const cancelOrderItemService = async (orderId: string, menuItemId: string
 };
 
 export const getOrderHistoryService = async () => {
-    const orders = await prisma.order.findMany({
-        where: { status: 'paid' },
-        include: {
-            table: true,
-            items: { include: { menuItem: true } }
-        },
-        orderBy: { updatedAt: 'desc' }
-    });
-    return { orders };
+    const [orders, creditTransactions, debtSettlements] = await Promise.all([
+        prisma.order.findMany({
+            where: { status: 'paid' },
+            include: {
+                table: true,
+                items: { include: { menuItem: true } }
+            },
+            orderBy: { updatedAt: 'desc' }
+        }),
+        prisma.creditTransaction.findMany({
+            orderBy: { createdAt: 'desc' }
+        }),
+        prisma.debtSettlement.findMany({
+            orderBy: { createdAt: 'desc' }
+        })
+    ]);
+    return { orders, creditTransactions, debtSettlements };
 };
 
 export const addItemsToOrderService = async (orderId: string, items: { menuItemId: string, quantity: number }[]) => {
