@@ -44,42 +44,42 @@ const LandingPage = () => {
         {
             title: "Digital Menu Magic",
             desc: "Update items, prices, and availability in real-time. Your menu evolves with your business instantly.",
-            icon: <Menu className="w-8 h-8" />,
+            icon: <Menu className="w-7 h-7" />,
             gradient: "from-[#16516f] to-[#1a5b7d]",
             bgGradient: "from-[#16516f]/10 to-[#1a5b7d]/5"
         },
         {
             title: "QR Code Revolution",
             desc: "Contactless ordering that delights customers. Watch your service speed soar by 45%.",
-            icon: <QrCode className="w-8 h-8" />,
+            icon: <QrCode className="w-7 h-7" />,
             gradient: "from-orange-500 to-red-500",
             bgGradient: "from-orange-500/10 to-red-500/5"
         },
         {
             title: "Smart Inventory",
             desc: "Never run out unexpectedly. Intelligent alerts keep you always prepared and stocked.",
-            icon: <Settings className="w-8 h-8" />,
+            icon: <Settings className="w-7 h-7" />,
             gradient: "from-emerald-500 to-teal-500",
             bgGradient: "from-emerald-500/10 to-teal-500/5"
         },
         {
             title: "Customer Loyalty",
             desc: "Build relationships that last. Credit ledger for your trusted regulars and VIPs.",
-            icon: <CreditCard className="w-8 h-8" />,
+            icon: <CreditCard className="w-7 h-7" />,
             gradient: "from-purple-500 to-pink-500",
             bgGradient: "from-purple-500/10 to-pink-500/5"
         },
         {
             title: "Real-Time Analytics",
             desc: "Track sales, popular items, and customer trends with beautiful, insightful dashboards.",
-            icon: <BarChart3 className="w-8 h-8" />,
+            icon: <BarChart3 className="w-7 h-7" />,
             gradient: "from-blue-500 to-cyan-500",
             bgGradient: "from-blue-500/10 to-cyan-500/5"
         },
         {
             title: "Global Reach",
             desc: "Serve customers anywhere, anytime. Multi-language support and global payment options.",
-            icon: <Globe className="w-8 h-8" />,
+            icon: <Globe className="w-7 h-7" />,
             gradient: "from-indigo-500 to-violet-500",
             bgGradient: "from-indigo-500/10 to-violet-500/5"
         }
@@ -116,26 +116,26 @@ const LandingPage = () => {
             {/* Animated Background Elements */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
                 <div 
-                    className="absolute top-20 left-10 w-96 h-96 bg-[#16516f]/10 rounded-full blur-3xl animate-blob"
-                    style={{ transform: `translate(${mousePosition.x * 0.01}px, ${mousePosition.y * 0.01}px)` }}
+                    className="absolute top-16 left-6 w-96 h-96 bg-[#16516f]/10 rounded-full blur-3xl animate-blob"
+                    style={{ transform: `translate(${mousePosition.x * 0.012}px, ${mousePosition.y * 0.012}px)` }}
                 ></div>
                 <div 
-                    className="absolute top-40 right-10 w-[500px] h-[500px] bg-orange-400/10 rounded-full blur-3xl animate-blob animation-delay-2000"
-                    style={{ transform: `translate(${mousePosition.x * -0.01}px, ${mousePosition.y * -0.01}px)` }}
+                    className="absolute top-24 right-6 w-[460px] h-[460px] bg-orange-400/10 rounded-full blur-3xl animate-blob animation-delay-2000"
+                    style={{ transform: `translate(${mousePosition.x * -0.012}px, ${mousePosition.y * -0.012}px)` }}
                 ></div>
                 <div 
-                    className="absolute -bottom-20 left-1/2 w-[600px] h-[600px] bg-purple-400/10 rounded-full blur-3xl animate-blob animation-delay-4000"
-                    style={{ transform: `translate(${mousePosition.x * 0.005}px, ${mousePosition.y * 0.005}px)` }}
+                    className="absolute -bottom-20 left-[55%] w-[500px] h-[500px] bg-purple-400/10 rounded-full blur-3xl animate-blob animation-delay-4000"
+                    style={{ transform: `translate(${mousePosition.x * 0.006}px, ${mousePosition.y * 0.006}px)` }}
                 ></div>
             </div>
 
             {/* Navbar */}
-            <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-slate-200/50 shadow-xl shadow-slate-900/5">
-                <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-                    <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <nav className="px-20 fixed right-0 left-0 top-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-slate-200/50 shadow-2xl shadow-slate-900/5">
+                <div className="max-w-7xl mx-auto px-7 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4 group cursor-pointer select-none" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                         <div className="relative">
                             <div className="absolute inset-0 bg-gradient-to-br from-[#16516f] to-[#1a5b7d] rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                            <div className="relative w-14 h-14 bg-gradient-to-br from-[#16516f] to-[#1a5b7d] rounded-2xl flex items-center justify-center shadow-2xl shadow-[#16516f]/30 group-hover:scale-110 transition-transform duration-300 p-2">
+                            <div className="relative w-14 h-14 bg-gradient-to-br from-[#16516f] to-[#1a5b7d] rounded-2xl flex items-center justify-center shadow-2xl shadow-[#16516f]/30 group-hover:scale-105 transition-transform duration-300 p-2">
                                 <img src={logo} alt="LeafClutch Logo" className="w-full h-full object-contain" />
                             </div>
                         </div>
@@ -148,11 +148,11 @@ const LandingPage = () => {
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate('/admin/login')}
-                            className="relative group px-8 py-3 bg-gradient-to-r from-[#16516f] to-[#1a5b7d] text-white rounded-full font-bold text-sm shadow-2xl shadow-[#16516f]/30 hover:shadow-[#16516f]/50 transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
+                            className="relative group px-7 py-3 bg-gradient-to-r from-[#16516f] to-[#1a5b7d] text-white rounded-full font-bold text-sm shadow-2xl shadow-[#16516f]/20 hover:shadow-[#16516f]/40 transition-all duration-300 hover:scale-110 active:scale-98 overflow-hidden"
                         >
                             <span className="relative z-10 flex items-center gap-2">
                                 Get Started
-                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </span>
                             <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </button>
@@ -161,16 +161,16 @@ const LandingPage = () => {
             </nav>
 
             {/* Hero Section */}
-            <section className="relative max-w-7xl mx-auto px-6 pt-24 pb-32 min-h-[90vh] flex items-center">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
-                    <div className="space-y-8 relative z-10">
-                        <div className="inline-flex items-center gap-3 px-5 py-3 rounded-full bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-[#16516f]/10 border-2 border-emerald-500/20 backdrop-blur-sm animate-fade-in">
+            <section className="px-32 pt-36 relative max-w-7xl mx-auto pb-28 min-h-[90vh] flex items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center w-full">
+                    <div className="space-y-10 relative z-10">
+                        <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-[#16516f]/10 border border-emerald-500/20 backdrop-blur-sm animate-fade-in">
                             <Zap className="w-5 h-5 text-emerald-600 animate-pulse" />
                             <span className="text-sm font-black text-emerald-700 tracking-wide">The Future of Dining is Here</span>
                             <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
                         </div>
 
-                        <h1 className="text-7xl lg:text-8xl xl:text-9xl font-black leading-[0.9] tracking-tight animate-slide-up">
+                        <h1 className="text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight tracking-tight animate-slide-up">
                             <span className="text-slate-900">Digital</span>
                             <br />
                             <span className="text-slate-900">Dining,</span>
@@ -180,24 +180,24 @@ const LandingPage = () => {
                             </span>
                         </h1>
 
-                        <p className="text-2xl text-slate-600 max-w-2xl leading-relaxed font-semibold animate-slide-up-delay">
+                        <p className="text-lg text-slate-600 max-w-2xl leading-relaxed font-medium animate-slide-up-delay">
                             Transform your restaurant with cutting-edge QR ordering, real-time inventory, and powerful admin tools.
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#16516f] to-orange-500 font-black"> Join the digital revolution.</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#16516f] to-orange-500 font-bold"> Join the digital revolution.</span>
                         </p>
 
-                        <div className="flex flex-wrap gap-5 pt-6 animate-slide-up-delay-2">
+                        <div className="flex flex-wrap gap-3 pt-4 animate-slide-up-delay-2">
                             <button 
                                 onClick={() => navigate('/admin/login')}
-                                className="group relative px-10 py-6 bg-gradient-to-r from-[#16516f] to-[#1a5b7d] text-white rounded-2xl font-black text-lg shadow-2xl shadow-[#16516f]/40 hover:shadow-[#16516f]/60 transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
+                                className="group relative px-5 py-4 bg-gradient-to-r from-[#16516f] to-[#1a5b7d] text-white rounded-2xl font-bold text-lg shadow-2xl shadow-[#16516f]/30 hover:shadow-[#16516f]/40 transition-all duration-300 hover:scale-110 active:scale-98 overflow-hidden"
                             >
-                                <span className="relative z-10 flex items-center gap-3">
+                                <span className="relative z-10 flex items-center gap-2">
                                     Get Started Free
                                     <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
                                 </span>
                                 <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                             </button>
 
-                            <button className="group px-10 py-6 bg-white/90 backdrop-blur-sm text-slate-900 border-2 border-slate-200 rounded-2xl font-black text-lg hover:bg-white hover:border-[#16516f]/40 transition-all duration-300 hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3">
+                            <button className="group px-5 py-4 bg-white/90 backdrop-blur-sm text-slate-900 border border-slate-200 rounded-2xl font-bold text-lg hover:bg-white hover:border-[#16516f]/40 transition-all duration-300 hover:scale-110 active:scale-98 shadow-xl flex items-center gap-3">
                                 <Play className="w-6 h-6 text-[#16516f] group-hover:scale-110 transition-transform" />
                                 Watch Demo
                             </button>
@@ -208,23 +208,22 @@ const LandingPage = () => {
                             {stats.map((stat, i) => (
                                 <div 
                                     key={i} 
-                                    className="group relative p-5 rounded-2xl bg-white/80 backdrop-blur-sm border-2 border-slate-200/50 hover:border-transparent transition-all duration-300 hover:scale-110 hover:-translate-y-1"
+                                    className="group relative p-5 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-200/50 hover:border-transparent transition-all duration-300 hover:scale-110 hover:-translate-y-2"
                                 >
                                     <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300`}></div>
                                     <div className={`flex justify-center mb-3 text-transparent bg-clip-text bg-gradient-to-r ${stat.color}`}>
                                         {stat.icon}
                                     </div>
-                                    <p className="text-3xl font-black text-slate-900">{stat.number}</p>
+                                    <p className="text-2xl font-extrabold text-slate-900">{stat.number}</p>
                                     <p className="text-xs text-slate-600 font-bold uppercase tracking-wider">{stat.label}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div className="relative lg:scale-110 animate-float">
-                        <div className="absolute -inset-10 bg-gradient-to-r from-[#16516f]/20 via-orange-400/20 to-purple-400/20 rounded-[4rem] blur-3xl animate-pulse-slow"></div>
-
-                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl shadow-slate-900/30 border-8 border-white/80 backdrop-blur-sm transform hover:rotate-2 transition-transform duration-700">
+                    <div className="relative scale-110 animate-float">
+                        <div className="absolute -inset-7 bg-gradient-to-r from-[#16516f]/20 via-orange-400/20 to-purple-400/20 rounded-[2.5rem] blur-3xl animate-pulse-slow"></div>
+                        <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-900/30 border-4 border-white/80 backdrop-blur-sm transform hover:rotate-2 transition-transform duration-700">
                             <img
                                 src="/chef.webp"
                                 alt="Restaurant Hero"
@@ -232,47 +231,42 @@ const LandingPage = () => {
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#16516f]/30 via-transparent to-transparent"></div>
                         </div>
-
                         {/* Floating Cards */}
-                        <div className="absolute -bottom-8 -left-8 bg-white/95 backdrop-blur-xl p-6 rounded-3xl shadow-2xl border-2 border-slate-100 flex items-center gap-4 max-w-xs hover:scale-110 transition-transform duration-300 animate-float-delay">
-                            <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center shadow-xl">
-                                <CheckCircle2 className="w-8 h-8 text-white" />
+                        <div className="absolute -bottom-7 -left-7 bg-white/95 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3 max-w-xs hover:scale-110 transition-transform duration-300 animate-float-delay">
+                            <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center shadow-xl">
+                                <CheckCircle2 className="w-7 h-7 text-white" />
                             </div>
                             <div>
-                                <p className="font-black text-slate-900 text-xl">45% Faster</p>
+                                <p className="font-extrabold text-slate-900 text-lg">45% Faster</p>
                                 <p className="text-sm text-slate-500 font-bold">Service Speed</p>
                             </div>
                         </div>
-
-                        <div className="absolute -top-8 -right-8 bg-gradient-to-br from-orange-400 to-red-500 p-5 rounded-3xl shadow-2xl animate-bounce-slow">
-                            <Star className="w-10 h-10 text-white fill-white" />
+                        <div className="absolute -top-7 -right-7 bg-gradient-to-br from-orange-400 to-red-500 p-5 rounded-2xl shadow-2xl animate-bounce-slow">
+                            <Star className="w-8 h-8 text-white fill-white" />
                         </div>
-
-                        <div className="absolute top-1/2 -right-12 bg-gradient-to-br from-[#16516f] to-[#1a5b7d] p-4 rounded-2xl shadow-2xl animate-float-delay-2">
-                            <Award className="w-8 h-8 text-white" />
+                        <div className="absolute top-1/2 -right-10 bg-gradient-to-br from-[#16516f] to-[#1a5b7d] p-4 rounded-xl shadow-xl animate-float-delay-2">
+                            <Award className="w-7 h-7 text-white" />
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* Feature Section */}
-            <section className="relative py-32 overflow-hidden">
+            <section className="py-20 px-32 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white to-slate-50"></div>
-
-                <div className="relative max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-20 space-y-6">
-                        <div className="inline-flex items-center gap-3 px-5 py-3 rounded-full bg-gradient-to-r from-[#16516f]/10 to-purple-500/10 border-2 border-[#16516f]/20">
+                <div className="relative max-w-7xl mx-auto">
+                    <div className="text-center mb-14 space-y-5">
+                        <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#16516f]/10 to-purple-500/10 border border-[#16516f]/20">
                             <Sparkles className="w-5 h-5 text-[#16516f]" />
                             <span className="text-sm font-black text-[#16516f] uppercase tracking-widest">Features</span>
                         </div>
-                        <h2 className="text-6xl lg:text-7xl font-black text-slate-900 leading-tight">
-                            Everything you need,
-                            <br />
+                        <h2 className="text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
+                            Everything you need,{" "}
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#16516f] to-orange-500">
                                 nothing you don't
                             </span>
                         </h2>
-                        <p className="text-xl text-slate-600 max-w-3xl mx-auto font-semibold leading-relaxed">
+                        <p className="text-lg text-slate-600 max-w-3xl mx-auto font-medium leading-normal">
                             Powerful features designed to make your restaurant operations seamless, efficient, and profitable.
                         </p>
                     </div>
@@ -281,19 +275,17 @@ const LandingPage = () => {
                         {features.map((f, i) => (
                             <div
                                 key={i}
-                                className="group relative bg-white/90 backdrop-blur-sm p-8 rounded-3xl border-2 border-slate-200/50 hover:border-transparent transition-all duration-500 hover:scale-105 hover:-translate-y-3 shadow-xl hover:shadow-2xl"
-                                style={{ animationDelay: `${i * 100}ms` }}
+                                className="group relative bg-white/90 backdrop-blur-sm p-8 rounded-3xl border border-slate-200/50 hover:border-transparent transition-all duration-500 hover:scale-110 hover:-translate-y-2 shadow-xl hover:shadow-2xl"
+                                style={{ animationDelay: `${i * 120}ms` }}
                             >
-                                <div className={`absolute inset-0 bg-gradient-to-br ${f.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl -z-10 blur-xl`}></div>
-
-                                <div className={`w-20 h-20 bg-gradient-to-br ${f.gradient} rounded-3xl flex items-center justify-center mb-6 text-white shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500`}>
+                                <div className={`absolute inset-0 bg-gradient-to-br ${f.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl -z-10 blur-lg`}></div>
+                                <div className={`w-16 h-16 bg-gradient-to-br ${f.gradient} rounded-2xl flex items-center justify-center mb-6 text-white shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500`}>
                                     {f.icon}
                                 </div>
-
-                                <h3 className="text-2xl font-black text-slate-900 mb-4 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-[#16516f] group-hover:to-orange-500 transition-all duration-300">
+                                <h3 className="text-xl font-bold text-slate-900 mb-4 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-[#16516f] group-hover:to-orange-500 transition-all duration-300">
                                     {f.title}
                                 </h3>
-                                <p className="text-slate-600 text-base leading-relaxed font-medium">
+                                <p className="text-slate-600 text-base leading-snug font-normal">
                                     {f.desc}
                                 </p>
                             </div>
@@ -303,29 +295,26 @@ const LandingPage = () => {
             </section>
 
             {/* Big Feature Section */}
-            <section className="relative py-32 bg-gradient-to-br from-[#16516f] via-[#1a5b7d] to-[#11425c] overflow-hidden">
+            <section className="relative px-32 py-20 bg-gradient-to-br from-[#16516f] via-[#1a5b7d] to-[#11425c] overflow-hidden">
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')]"></div>
                 </div>
 
-                <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                    <div className="space-y-8 text-white">
+                <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                    <div className="space-y-10 text-white">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-                            <Rocket className="w-4 h-4" />
+                            <Rocket className="w-5 h-5" />
                             <span className="text-sm font-black uppercase tracking-widest">Stand Out</span>
                         </div>
-                        <h2 className="text-6xl lg:text-7xl font-black leading-tight">
-                            Stand out from
-                            <br />
+                        <h2 className="text-4xl lg:text-5xl font-extrabold leading-tight">
+                            Stand out from <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 via-yellow-300 to-orange-200">
                                 the competition
                             </span>
                         </h2>
-
-                        <p className="text-xl text-blue-100 leading-relaxed font-semibold">
+                        <p className="text-lg text-blue-100 leading-normal font-medium">
                             Your customers expect modern, seamless experiences. LeafClutch delivers exactly that, making your restaurant feel premium and tech-forward.
                         </p>
-
                         <div className="space-y-5">
                             {[
                                 "Real-time order tracking for guests",
@@ -333,11 +322,11 @@ const LandingPage = () => {
                                 "Integrated WhatsApp notifications",
                                 "Seamless credit management"
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center gap-5 group">
-                                    <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:bg-white/20 transition-all duration-300 group-hover:scale-110 border-2 border-white/20">
-                                        <ShieldCheck className="w-6 h-6 text-emerald-300" />
+                                <div key={i} className="flex items-center gap-4 group">
+                                    <div className="w-11 h-11 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-all duration-300 group-hover:scale-110 border border-white/20">
+                                        <ShieldCheck className="w-7 h-7 text-emerald-300" />
                                     </div>
-                                    <span className="font-black text-xl group-hover:translate-x-2 transition-transform duration-300">
+                                    <span className="font-bold text-lg group-hover:translate-x-2 transition-transform duration-300">
                                         {item}
                                     </span>
                                 </div>
@@ -346,7 +335,7 @@ const LandingPage = () => {
 
                         <button 
                             onClick={() => navigate('/admin/login')}
-                            className="group mt-10 px-10 py-6 bg-white text-[#16516f] rounded-2xl font-black text-lg shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-3"
+                            className="group mt-10 px-10 py-4 bg-white text-[#16516f] rounded-2xl font-bold text-lg shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 hover:scale-110 active:scale-98 flex items-center gap-3"
                         >
                             Explore Features
                             <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
@@ -354,62 +343,59 @@ const LandingPage = () => {
                     </div>
 
                     <div className="relative">
-                        <div className="absolute -inset-10 bg-gradient-to-r from-orange-400/30 to-purple-400/30 rounded-[4rem] blur-3xl animate-pulse-slow"></div>
-
-                        <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 backdrop-blur-sm hover:scale-105 transition-transform duration-700">
+                        <div className="absolute -inset-7 bg-gradient-to-r from-orange-400/30 to-purple-400/30 rounded-[2.5rem] blur-3xl animate-pulse-slow"></div>
+                        <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/40 backdrop-blur-sm hover:scale-110 transition-transform duration-700">
                             <img
                                 src="/landing-qr.jpg"
                                 alt="QR Scanning"
                                 className="w-full h-auto"
                             />
                         </div>
-
-                        <div className="absolute -top-10 -right-10 bg-gradient-to-br from-orange-400 to-red-500 p-8 rounded-3xl shadow-2xl animate-float">
-                            <QrCode className="w-14 h-14 text-white" />
+                        <div className="absolute -top-10 -right-10 bg-gradient-to-br from-orange-400 to-red-500 p-8 rounded-2xl shadow-2xl animate-float">
+                            <QrCode className="w-12 h-12 text-white" />
                         </div>
-
-                        <div className="absolute -bottom-10 -left-10 bg-gradient-to-br from-[#16516f] to-[#1a5b7d] p-6 rounded-3xl shadow-2xl animate-float-delay">
-                            <Heart className="w-10 h-10 text-white fill-white" />
+                        <div className="absolute -bottom-10 -left-10 bg-gradient-to-br from-[#16516f] to-[#1a5b7d] p-6 rounded-2xl shadow-2xl animate-float-delay">
+                            <Heart className="w-9 h-9 text-white fill-white" />
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* FAQ Section */}
-            <section className="py-32 max-w-5xl mx-auto px-6">
-                <div className="text-center mb-20 space-y-6">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#16516f]/10 to-orange-500/10 border-2 border-[#16516f]/20">
-                        <Sparkles className="w-4 h-4 text-[#16516f]" />
+            <section className="px-20 py-16 max-w-4xl mx-auto">
+                <div className="text-center mb-14 space-y-5">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#16516f]/10 to-orange-500/10 border border-[#16516f]/20">
+                        <Sparkles className="w-5 h-5 text-[#16516f]" />
                         <span className="text-sm font-black text-[#16516f] uppercase tracking-widest">FAQ</span>
                     </div>
-                    <h2 className="text-6xl lg:text-7xl font-black text-slate-900">
+                    <h2 className="text-4xl lg:text-5xl font-extrabold text-slate-900">
                         Got <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#16516f] to-orange-500">Questions?</span>
                     </h2>
-                    <p className="text-2xl text-slate-600 font-semibold">We've got answers</p>
+                    <p className="text-lg text-slate-600 font-medium">We've got answers</p>
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-6">
                     {faqs.map((f, i) => (
                         <div
                             key={i}
-                            className="bg-white/90 backdrop-blur-sm border-2 border-slate-200/50 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-[#16516f]/40"
+                            className="bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-[#16516f]/30"
                         >
                             <button
                                 onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                                className="w-full flex items-center justify-between p-8 hover:bg-gradient-to-r hover:from-[#16516f]/5 hover:to-orange-500/5 transition-colors group"
+                                className="w-full flex items-center justify-between p-7 hover:bg-gradient-to-r hover:from-[#16516f]/5 hover:to-orange-500/5 transition-colors group"
                             >
-                                <span className="font-black text-xl text-slate-800 text-left pr-4 group-hover:text-[#16516f] transition-colors">{f.q}</span>
+                                <span className="font-bold text-lg text-slate-800 text-left pr-5 group-hover:text-[#16516f] transition-colors">{f.q}</span>
                                 <ChevronDown
-                                    className={`w-7 h-7 text-[#16516f] transition-transform duration-300 flex-shrink-0 ${activeFaq === i ? 'rotate-180' : ''
+                                    className={`w-6 h-6 text-[#16516f] transition-transform duration-300 flex-shrink-0 ${activeFaq === i ? 'rotate-180' : ''
                                         }`}
                                 />
                             </button>
 
                             <div
-                                className={`overflow-hidden transition-all duration-500 ${activeFaq === i ? 'max-h-96' : 'max-h-0'
+                                className={`overflow-hidden transition-all duration-500 ${activeFaq === i ? 'max-h-60' : 'max-h-0'
                                     }`}
                             >
-                                <div className="p-8 pt-0 text-slate-600 leading-relaxed font-semibold text-lg">
+                                <div className="p-7 pt-0 text-slate-600 leading-relaxed font-medium text-base">
                                     {f.a}
                                 </div>
                             </div>
@@ -419,31 +405,30 @@ const LandingPage = () => {
             </section>
 
             {/* CTA Section */}
-            <section className="relative py-32 px-6 overflow-hidden">
+            <section className="relative px-32 py-20 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#16516f] via-[#1a5b7d] to-[#11425c]"></div>
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIgb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-10"></div>
 
-                <div className="relative max-w-6xl mx-auto text-center space-y-12 text-white">
-                    <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30">
+                <div className="relative max-w-4xl mx-auto text-center space-y-12 text-white">
+                    <div className="inline-flex items-center gap-3 px-7 py-3 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
                         <Sparkles className="w-5 h-5 animate-pulse" />
                         <span className="text-sm font-black uppercase tracking-widest">Join 500+ Restaurants</span>
                     </div>
 
-                    <h2 className="text-6xl lg:text-8xl font-black tracking-tight leading-tight">
+                    <h2 className="text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
                         Ready to transform
                         <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-orange-200">your restaurant?</span>
                     </h2>
 
-                    <p className="text-2xl text-white/95 font-semibold max-w-3xl mx-auto leading-relaxed">
-                        Get your digital menu ready in minutes. No credit card required.
-                        <span className="font-black"> Start your free trial today.</span>
+                    <p className="text-lg text-white/95 font-medium max-w-2xl mx-auto leading-relaxed">
+                        Get your digital menu ready in minutes. No credit card required. <span className="font-bold">Start your free trial today.</span>
                     </p>
 
-                    <div className="flex flex-wrap justify-center gap-6 pt-8">
+                    <div className="flex flex-wrap justify-center gap-8 pt-6">
                         <button 
                             onClick={() => navigate('/admin/login')}
-                            className="group px-12 py-7 bg-white text-[#16516f] rounded-2xl font-black text-xl shadow-2xl hover:shadow-white/50 transition-all duration-300 hover:scale-110 active:scale-95"
+                            className="group px-12 py-6 bg-white text-[#16516f] rounded-2xl font-bold text-xl shadow-2xl hover:shadow-white/40 transition-all duration-300 hover:scale-110 active:scale-98"
                         >
                             <span className="flex items-center gap-3">
                                 Start Free Trial
@@ -451,7 +436,7 @@ const LandingPage = () => {
                             </span>
                         </button>
 
-                        <button className="px-12 py-7 bg-white/10 backdrop-blur-sm text-white border-2 border-white/40 rounded-2xl font-black text-xl hover:bg-white/20 transition-all duration-300 hover:scale-110 active:scale-95 flex items-center gap-3">
+                        <button className="px-12 py-6 bg-white/10 backdrop-blur-sm text-white border border-white/30 rounded-2xl font-bold text-xl hover:bg-white/20 transition-all duration-300 hover:scale-110 active:scale-98 flex items-center gap-3">
                             <Smartphone className="w-7 h-7" />
                             Download App
                         </button>
@@ -460,8 +445,8 @@ const LandingPage = () => {
             </section>
 
             {/* Footer */}
-            <footer className="relative bg-white/80 backdrop-blur-2xl py-24 border-t border-slate-200/50 shadow-xl shadow-slate-900/5">
-                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+            <footer className="px-32 relative bg-white/90 backdrop-blur-2xl py-16 border-t border-slate-200/40 shadow-2xl shadow-slate-900/5">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-14">
                     <div className="col-span-1 md:col-span-2 space-y-8">
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 bg-gradient-to-br from-[#16516f] to-[#1a5b7d] rounded-2xl flex items-center justify-center shadow-2xl p-2">
@@ -472,31 +457,29 @@ const LandingPage = () => {
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#16516f] to-[#1a5b7d]">Clutch</span>
                             </span>
                         </div>
-                        <p className="text-slate-600 max-w-lg leading-relaxed text-lg font-medium">
-                            Empowering the hospitality industry with cutting-edge digital solutions.
-                            From street food stalls to luxury resorts, we're your partner in growth.
+                        <p className="text-slate-600 max-w-lg leading-snug text-lg font-medium">
+                            Empowering the hospitality industry with cutting-edge digital solutions. From street food stalls to luxury resorts, we're your partner in growth.
                         </p>
                     </div>
 
                     <div>
-                        <h4 className="font-black mb-8 text-slate-700 uppercase tracking-widest text-sm">Product</h4>
-                        <ul className="space-y-4 text-slate-600">
+                        <h4 className="font-extrabold mb-6 text-slate-700 uppercase tracking-wider text-sm">Product</h4>
+                        <ul className="space-y-3 text-slate-600">
                             {["Features", "Digital Menu", "QR Ordering", "Inventory"].map(item => (
                                 <li key={item}>
-                                    <a href="#" className="hover:text-[#16516f] transition-colors hover:translate-x-2 inline-block font-semibold">
+                                    <a href="#" className="hover:text-[#16516f] transition-colors hover:translate-x-2 inline-block font-semibold text-base">
                                         {item}
                                     </a>
                                 </li>
                             ))}
                         </ul>
                     </div>
-
                     <div>
-                        <h4 className="font-black mb-8 text-slate-700 uppercase tracking-widest text-sm">Company</h4>
-                        <ul className="space-y-4 text-slate-600">
+                        <h4 className="font-extrabold mb-6 text-slate-700 uppercase tracking-wider text-sm">Company</h4>
+                        <ul className="space-y-3 text-slate-600">
                             {["About", "Contact", "Privacy", "Terms"].map(item => (
                                 <li key={item}>
-                                    <a href="#" className="hover:text-[#16516f] transition-colors hover:translate-x-2 inline-block font-semibold">
+                                    <a href="#" className="hover:text-[#16516f] transition-colors hover:translate-x-2 inline-block font-semibold text-base">
                                         {item}
                                     </a>
                                 </li>
@@ -504,9 +487,8 @@ const LandingPage = () => {
                         </ul>
                     </div>
                 </div>
-
-                <div className="max-w-7xl mx-auto px-6 pt-16 mt-16 border-t border-slate-200/50 text-center">
-                    <p className="text-slate-500 font-semibold text-lg">
+                <div className="max-w-7xl mx-auto pt-12 mt-8 border-t border-slate-200/40 text-center">
+                    <p className="text-slate-500 font-medium text-lg">
                         &copy; {new Date().getFullYear()} LeafClutch Technology. Crafted with <Heart className="w-5 h-5 inline text-red-500 fill-red-500" /> for modern hospitality.
                     </p>
                 </div>
@@ -515,79 +497,79 @@ const LandingPage = () => {
             {/* Custom Animations */}
             <style>{`
                 @keyframes blob {
-                    0%, 100% { transform: translate(0, 0) scale(1); }
-                    25% { transform: translate(20px, -50px) scale(1.1); }
-                    50% { transform: translate(-20px, 20px) scale(0.9); }
-                    75% { transform: translate(50px, 50px) scale(1.05); }
+                    0%, 100% { transform: translate(0, 0) scale(1.08); }
+                    25% { transform: translate(28px, -52px) scale(1.14); }
+                    50% { transform: translate(-26px, 25px) scale(1.02); }
+                    75% { transform: translate(48px, 52px) scale(1.09); }
                 }
                 .animate-blob {
-                    animation: blob 8s infinite ease-in-out;
+                    animation: blob 8.3s infinite ease-in-out;
                 }
                 .animation-delay-2000 {
-                    animation-delay: 2s;
+                    animation-delay: 2.2s;
                 }
                 .animation-delay-4000 {
-                    animation-delay: 4s;
+                    animation-delay: 4.4s;
                 }
                 @keyframes gradient {
                     0%, 100% { background-position: 0% 50%; }
                     50% { background-position: 100% 50%; }
                 }
                 .animate-gradient {
-                    background-size: 200% 200%;
-                    animation: gradient 4s ease infinite;
+                    background-size: 220% 220%;
+                    animation: gradient 5s ease infinite;
                 }
                 @keyframes pulse-slow {
-                    0%, 100% { opacity: 0.6; }
+                    0%, 100% { opacity: 0.7; }
                     50% { opacity: 1; }
                 }
                 .animate-pulse-slow {
-                    animation: pulse-slow 5s ease-in-out infinite;
+                    animation: pulse-slow 6.5s ease-in-out infinite;
                 }
                 @keyframes bounce-slow {
                     0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-25px); }
+                    50% { transform: translateY(-30px); }
                 }
                 .animate-bounce-slow {
-                    animation: bounce-slow 4s ease-in-out infinite;
+                    animation: bounce-slow 5.1s ease-in-out infinite;
                 }
                 @keyframes float {
-                    0%, 100% { transform: translateY(0px) rotate(0deg); }
-                    50% { transform: translateY(-25px) rotate(5deg); }
+                    0%, 100% { transform: translateY(0px) rotate(0deg) scale(1.04); }
+                    50% { transform: translateY(-26px) rotate(5deg) scale(1.13); }
                 }
                 .animate-float {
-                    animation: float 7s ease-in-out infinite;
+                    animation: float 7.1s ease-in-out infinite;
                 }
                 .animate-float-delay {
-                    animation: float 7s ease-in-out infinite;
-                    animation-delay: 1.5s;
+                    animation: float 7.1s ease-in-out infinite;
+                    animation-delay: 1.6s;
                 }
                 .animate-float-delay-2 {
-                    animation: float 7s ease-in-out infinite;
-                    animation-delay: 3s;
+                    animation: float 7.1s ease-in-out infinite;
+                    animation-delay: 3.1s;
                 }
                 @keyframes fade-in {
-                    from { opacity: 0; transform: translateY(-10px); }
-                    to { opacity: 1; transform: translateY(0); }
+                    from { opacity: 0; transform: translateY(-14px) scale(1.07); }
+                    to { opacity: 1; transform: translateY(0) scale(1.08);}
                 }
                 .animate-fade-in {
-                    animation: fade-in 1s ease-out;
+                    animation: fade-in 1.1s ease-out;
                 }
                 @keyframes slide-up {
-                    from { opacity: 0; transform: translateY(30px); }
-                    to { opacity: 1; transform: translateY(0); }
+                    from { opacity: 0; transform: translateY(27px) scale(1.07);}
+                    to { opacity: 1; transform: translateY(0) scale(1.08);}
                 }
                 .animate-slide-up {
-                    animation: slide-up 1s ease-out;
+                    animation: slide-up 1.1s ease-out;
                 }
                 .animate-slide-up-delay {
-                    animation: slide-up 1s ease-out 0.2s both;
+                    animation: slide-up 1.1s ease-out 0.28s both;
                 }
                 .animate-slide-up-delay-2 {
-                    animation: slide-up 1s ease-out 0.4s both;
+                    animation: slide-up 1.1s ease-out 0.6s both;
                 }
                 .animate-slide-up-delay-3 {
-                    animation: slide-up 1s ease-out 0.6s both;
+                    animation: slide-up 1.1s ease-out 0.9s both;
                 }
             `}</style>
         </div>
