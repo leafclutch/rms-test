@@ -9,6 +9,8 @@ export interface Customer {
   creditLimit?: number;
   creditHistory: CreditTransaction[];
   createdAt: Date;
+  updatedAt?: Date;
+  ledgerCount?: number;
 }
 
 export interface CreditTransaction {

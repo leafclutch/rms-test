@@ -76,9 +76,6 @@ export const recordDebtPayment = async (accountId: string, amount: number, descr
             }
         });
 
-        // -----------------------------------------------------
-        // FIFO Settlement Logic: Reduce 'creditAmount' on past orders
-        // -----------------------------------------------------
         const unpaidOrders = await tx.order.findMany({
             where: {
                 customerId: accountId,
@@ -117,9 +114,6 @@ export const recordDebtPayment = async (accountId: string, amount: number, descr
 
             remainingPayment -= deduct;
         }
-        // -----------------------------------------------------
-
-        // Emit socket event to refresh admin dashboards
         try {
             const { getIO } = await import('../socket.ts');
             getIO().emit('order:paid', { customerId: accountId });
@@ -133,7 +127,17 @@ export const recordDebtPayment = async (accountId: string, amount: number, descr
 
 export const listAllCreditAccounts = async () => {
     return await prisma.customer.findMany({
-        orderBy: { fullName: 'asc' }
+        orderBy: { createdAt: 'desc' }, 
+        include: {
+            _count: {
+                select: { ledger: true }
+            },
+            ledger: {
+                take: 1,
+                orderBy: { createdAt: 'desc' },
+                select: { createdAt: true }
+            }
+        }
     });
 };
 
@@ -159,7 +163,22 @@ export const deleteAccount = async (accountId: string) => {
         throw new AppError('Cannot delete a credit account with an outstanding balance. Please settle the debt first.', 400);
     }
 
-    return await prisma.customer.delete({ where: { id: accountId } });
+    return await prisma.$transaction(async (tx) => {
+        // 1. Delete Credit Transactions (Ledger)
+        await tx.creditTransaction.deleteMany({ where: { customerId: accountId } });
+
+        // 2. Delete Debt Settlements
+        await tx.debtSettlement.deleteMany({ where: { customerId: accountId } });
+
+        // 3. Disconnect Orders (Set customerId to null to preserve order history but break FK)
+        await tx.order.updateMany({
+            where: { customerId: accountId },
+            data: { customerId: null }
+        });
+
+        // 4. Finally, delete the customer
+        return await tx.customer.delete({ where: { id: accountId } });
+    });
 };
 
 export const recordCreditCharge = async (accountId: string, amount: number, description?: string) => {

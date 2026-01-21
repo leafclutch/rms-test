@@ -14,10 +14,11 @@ import { useOrderStore } from "../../store/useOrderStore";
 
 const AdminDashboardView = () => {
   const navigate = useNavigate();
-  const { orders, fetchOrders, initializeSocket } = useOrderStore();
+  const { orders, fetchOrders, initializeSocket, historyOrders, fetchHistory } = useOrderStore();
 
   useEffect(() => {
     fetchOrders();
+    fetchHistory();
     const cleanup = initializeSocket();
     return cleanup;
   }, []);
@@ -27,10 +28,34 @@ const AdminDashboardView = () => {
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
     .slice(0, 5);
 
+  // Calculate Today's Revenue (Cash + Online, excluding Credit)
+  const todaysRevenue = [...orders, ...historyOrders].reduce((acc, order) => {
+    const dateObj = new Date(order.createdAt || order.updatedAt || Date.now());
+    const today = new Date();
+    const isToday = dateObj.getDate() === today.getDate() &&
+                    dateObj.getMonth() === today.getMonth() &&
+                    dateObj.getFullYear() === today.getFullYear();
+
+    if (!isToday) return acc;
+
+    let cash = Number(order.cashAmount || 0);
+    let online = Number(order.onlineAmount || 0);
+    let credit = Number(order.creditAmount || 0);
+
+    // Logic to handle anonymous credit as cash (matching AdminOrdersView)
+    if (credit > 0 && !order.customerId) {
+        cash += credit;
+    }
+
+    // Only add realized payments (Cash + Online)
+    // If mixed, cash and online are added. Credit part is ignored.
+    return acc + cash + online;
+  }, 0);
+
   const stats = [
     {
       label: "Today's Revenue",
-      value: "Rs. " + orders.reduce((acc, o) => acc + (o.status === 'paid' ? o.totalAmount : 0), 0).toLocaleString(),
+      value: "Rs. " + todaysRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }),
       icon: Wallet,
       color: "text-green-600",
       bg: "bg-green-100",

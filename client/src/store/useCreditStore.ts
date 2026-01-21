@@ -11,8 +11,8 @@ interface CreditStore {
   fetchCustomers: () => Promise<void>;
   fetchCustomerDetails: (id: string) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'creditHistory' | 'totalCredit'>) => Promise<Customer>;
-  updateCustomer: (id: string, updates: Partial<Customer>) => void;
-  deleteCustomer: (id: string) => void;
+  updateCustomer: (id: string, updates: Partial<Customer>) => Promise<void>;
+  deleteCustomer: (id: string) => Promise<void>;
   getCustomerById: (id: string) => Customer | undefined;
   searchCustomers: (query: string) => Customer[];
 
@@ -43,7 +43,9 @@ export const useCreditStore = create<CreditStore>((set, get) => ({
         email: c.email,
         totalCredit: Number(c.totalDue || c.totalCredit || 0),
         creditHistory: [],
-        createdAt: c.createdAt ? new Date(c.createdAt) : new Date()
+        createdAt: c.createdAt ? new Date(c.createdAt) : new Date(),
+        updatedAt: c.ledger && c.ledger.length > 0 ? new Date(c.ledger[0].createdAt) : (c.updatedAt ? new Date(c.updatedAt) : new Date(c.createdAt)),
+        ledgerCount: c._count?.ledger || 0
       }));
       set({ customers, isLoading: false });
     } catch (error: any) {
@@ -160,17 +162,33 @@ export const useCreditStore = create<CreditStore>((set, get) => ({
     }
   },
 
-  updateCustomer: (id, updates) =>
+  updateCustomer: async (id, updates) => {
+    // Ideally call API here too, but for now just updating local state to resolve type error and prepare for future
     set(state => ({
       customers: state.customers.map(c =>
         c.id === id ? { ...c, ...updates } : c
       )
-    })),
+    }));
+  },
 
-  deleteCustomer: (id) =>
-    set(state => ({
-      customers: state.customers.filter(c => c.id !== id)
-    })),
+  deleteCustomer: async (id) => {
+    try {
+      // Call API to delete
+      await import('../api/credit').then(api => api.deleteCustomer(id));
+      
+      // Update local state
+      set(state => ({
+        customers: state.customers.filter(c => c.id !== id)
+      }));
+      toast.success('Customer deleted successfully');
+    } catch (error: any) {
+      console.error('Failed to delete customer:', error);
+      // Extract error message from backend
+      const message = error.response?.data?.message || error.message || 'Failed to delete customer';
+      toast.error(message);
+      throw error;
+    }
+  },
 
   getCustomerById: (id) =>
     get().customers.find(c => c.id === id),
