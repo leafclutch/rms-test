@@ -25,10 +25,10 @@ import AdminCreateOrderView from '../pages/admin/AdminCreateOrderView';
 import OnlineEntry from '../pages/customer/OnlineEntry';
 
 export const router = createBrowserRouter([
-  // Landing Page
+  // Landing Page - Redirect to /admin/login instead of rendering login directly
   {
     path: '/',
-    element: <LandingPage />
+    element: <Navigate to="/admin/login" replace />
   },
   // Online Entry
   {

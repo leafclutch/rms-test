@@ -38,13 +38,13 @@ const AdminLoginView: React.FC = () => {
       <div className="absolute bottom-0 right-0 w-[420px] h-[420px] bg-orange-400/20 rounded-full blur-3xl"></div>
 
       {/* Back */}
-      <Link
+      {/* <Link
         to="/"
         className="absolute top-8 left-8 flex items-center gap-2 text-slate-500 hover:text-[#16516f] text-sm font-semibold"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Home
-      </Link>
+      </Link> */}
 
       {/* Card */}
       <div className="relative z-10 w-full max-w-md bg-white/70 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-[0_20px_60px_-10px_rgba(22,81,111,0.35)] p-10 animate-login-card">
