@@ -6,6 +6,17 @@ import { useCartStore } from '../../store/useCartStore';
 import { createOrder } from '../../api/orders';
 import axios from 'axios';
 import type { MenuItem } from '../../types/menu';
+import { ShoppingCart } from 'lucide-react';
+
+// Types for product.image
+type ProductImage =
+    | string
+    | {
+        url: string;
+        alt?: string;
+    }
+    | undefined
+    | null;
 
 const AdminCreateOrderView: React.FC = () => {
     const { state } = useLocation();
@@ -69,6 +80,36 @@ const AdminCreateOrderView: React.FC = () => {
         return matchesCat && matchesSearch;
     });
 
+    /**
+     * Returns the JSX for displaying the image emoji or an img tag.
+     */
+    function renderProductImage(imageField: ProductImage, productName: string) {
+        if (!imageField) {
+            return '🍽️';
+        }
+        if (typeof imageField === 'string') {
+            return imageField;
+        }
+        if (
+            typeof imageField === 'object' &&
+            typeof imageField.url === 'string'
+        ) {
+            return (
+                <img
+                    src={imageField.url}
+                    alt={imageField.alt || productName}
+                    className="w-12 h-12 rounded-lg object-cover"
+                />
+            );
+        }
+        return '🍽️';
+    }
+
+    const categoryOptions = [
+        { categoryId: 'all', categoryName: 'All' },
+        ...(categories ?? []),
+    ];
+
     return (
         <div className="flex h-screen bg-gray-100">
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -81,33 +122,68 @@ const AdminCreateOrderView: React.FC = () => {
                     </div>
                 </header>
 
-                <div className="p-4">
-                    <div className="mb-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input type="text" placeholder="Search menu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                <div className="p-4 space-y-4">
+                    <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">Filter Menu</h3>
+                        <div className="relative mb-4">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search items..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 focus:border-orange-500 focus:outline-none"
+                            />
                         </div>
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto pb-2">
-                        <button onClick={() => setSelectedCategory('All')} className={`px-4 py-2 rounded-full font-semibold text-sm ${selectedCategory === 'All' ? 'bg-orange-600 text-white' : 'bg-white'}`}>All</button>
-                        {categories.map(cat => (
-                            <button key={cat.categoryId} onClick={() => setSelectedCategory(cat.categoryName)} className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap ${selectedCategory === cat.categoryName ? 'bg-orange-600 text-white' : 'bg-white'}`}>{cat.categoryName}</button>
-                        ))}
+                        <select
+                            className="w-full p-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 focus:border-orange-500 focus:outline-none"
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            disabled={!!searchQuery.trim()}
+                        >
+                            {categoryOptions.map((cat) => (
+                                <option key={cat.categoryId || (typeof cat === 'string' ? cat : '')} value={cat.categoryName || (typeof cat === 'string' ? cat : '')}>
+                                    {cat.categoryName || (typeof cat === 'string' ? cat : '')}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
-                <main className="flex-1 overflow-y-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredItems.map((item: MenuItem) => (
-                        <div key={item.id} className="bg-white rounded-lg shadow p-3 flex flex-col">
-                            <div>
-                                <h3 className="font-bold text-base text-gray-800">{item.name}</h3>
-                                <p className="text-sm text-gray-600 font-semibold">Rs. {item.price}</p>
-                            </div>
-                            <button onClick={() => addItem(item)} disabled={!item.isAvailable} className="mt-3 w-full py-1.5 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:bg-gray-300 transition-colors text-sm">
-                                {item.isAvailable ? 'Add' : 'Unavailable'}
-                            </button>
+                <main className="flex-1 overflow-y-auto p-4 space-y-4">
+                    <h2 className="text-xl font-bold text-gray-800 pb-2 border-b-2">Menu Items</h2>
+                    {filteredItems.length === 0 ? (
+                        <div className="text-center py-20 text-gray-400">
+                            <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                            <p className="text-lg">No items available</p>
                         </div>
-                    ))}
+                    ) : (
+                        filteredItems.map((item: MenuItem) => (
+                            <div key={item.id} className="bg-white rounded-2xl p-4 shadow-sm border hover:shadow-md transition">
+                                <div className="flex justify-between items-center">
+                                    <div className="flex gap-4 items-center">
+                                        <span className="text-3xl">
+                                            {renderProductImage(item.image as ProductImage, item.name)}
+                                        </span>
+                                        <div>
+                                            <h4 className="font-bold text-lg flex items-center gap-2">
+                                                {item.name} <span>{item.isVeg ? '🟢' : '🔴'}</span>
+                                            </h4>
+                                            <p className="text-xs text-gray-500">{item.category}</p>
+                                            <p className="text-orange-600 font-bold mt-1">Rs. {item.price}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => addItem(item)}
+                                        disabled={!item.isAvailable}
+                                        className="px-5 py-2 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:bg-gray-300 transition-colors"
+                                    >
+                                        {item.isAvailable ? 'Add' : 'Unavailable'}
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </main>
             </div>
 
