@@ -43,7 +43,7 @@ model MenuItem {
   name        String
   categoryId  String       @db.Uuid
   price       Decimal
-  department  Department   @default(OTHERS)
+  department  Department   @default(KITCHEN)
   isAvailable Boolean      @default(true)
   isSpecial   Boolean      @default(false)
   createdAt   DateTime     @default(now())
@@ -249,8 +249,7 @@ enum TransactionType {
 
 enum Department {
   KITCHEN
-  SMOKES
-  DRINKS
-  BEER
-  OTHERS
+  DRINK
+  BAKERY
+  HUKKA
 }

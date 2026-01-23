@@ -7,9 +7,9 @@ import ConfirmModal from "../common/ConfirmModal";
 // Department options
 const DEPARTMENTS = [
   { id: 'kitchen', name: 'Kitchen', icon: '🍽️' },
-  { id: 'drinks', name: 'Drinks', icon: '☕' },
-  { id: 'beer', name: 'Beer', icon: '🍺' },
-  { id: 'smokes', name: 'Smokes', icon: '💨' },
+  { id: 'drink', name: 'Drink', icon: '☕' },
+  { id: 'bakery', name: 'Bakery', icon: '🥯' },
+  { id: 'hukka', name: 'Hukka', icon: '💨' },
 ];
 
 type EditMenuItemModalProps = {
@@ -76,7 +76,7 @@ const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
     }
 
     // Convert department to uppercase for database
-    const departmentUpper = department.toUpperCase() as 'KITCHEN' | 'DRINKS' | 'BEER' | 'SMOKES';
+    const departmentUpper = department.toUpperCase() as 'KITCHEN' | 'DRINK' | 'BAKERY' | 'HUKKA';
 
     const updateData = {
       name,
@@ -172,31 +172,64 @@ const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
               />
             </div>
 
-            {/* Veg/Non-Veg (Radio) */}
+            {/* Food Type (Dual Checkbox) */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">
                 Food Type <span className="text-orange-600">*</span>
               </label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="editFoodType"
-                    checked={isVeg === true}
-                    onChange={() => setIsVeg(true)}
-                    className="w-4 h-4 text-orange-600 focus:ring-orange-500"
-                  />
-                  <span className="text-sm">🟢 Veg</span>
+              <div className="flex items-center gap-6">
+                {/* Vegetarian Checkbox */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <span
+                    className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
+                    ${
+                      isVeg
+                        ? "border-green-600 bg-green-600"
+                        : "border-gray-300 bg-white"
+                    } mr-1`}
+                    style={{ transition: "background 0.15s, border 0.15s" }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isVeg === true}
+                      onChange={() => setIsVeg(true)}
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                    />
+                    {isVeg === true && (
+                      <Check
+                        className="w-4 h-4 text-white pointer-events-none"
+                        strokeWidth={3}
+                      />
+                    )}
+                  </span>
+                  <span className="text-sm font-medium">Vegetarian</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="editFoodType"
-                    checked={isVeg === false}
-                    onChange={() => setIsVeg(false)}
-                    className="w-4 h-4 text-orange-600 focus:ring-orange-500"
-                  />
-                  <span className="text-sm">🔴 Non-Veg</span>
+
+                {/* Non-Vegetarian Checkbox */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <span
+                    className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
+                    ${
+                      !isVeg
+                        ? "border-red-600 bg-red-600"
+                        : "border-gray-300 bg-white"
+                    } mr-1`}
+                    style={{ transition: "background 0.15s, border 0.15s" }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isVeg === false}
+                      onChange={() => setIsVeg(false)}
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                    />
+                    {isVeg === false && (
+                      <Check
+                        className="w-4 h-4 text-white pointer-events-none"
+                        strokeWidth={3}
+                      />
+                    )}
+                  </span>
+                  <span className="text-sm font-medium">Non-Vegetarian</span>
                 </label>
               </div>
             </div>

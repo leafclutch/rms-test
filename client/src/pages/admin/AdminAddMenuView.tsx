@@ -7,9 +7,9 @@ import toast from "react-hot-toast";
 // Department options
 const DEPARTMENTS = [
   { id: 'kitchen', name: 'Kitchen', icon: '🍽️' },
-  { id: 'drinks', name: 'Drinks', icon: '☕' },
-  { id: 'beer', name: 'Beer', icon: '🍺' },
-  { id: 'smokes', name: 'Smokes', icon: '💨' },
+  { id: 'drink', name: 'Drink', icon: '☕' },
+  { id: 'bakery', name: 'Bakery', icon: '🥯' },
+  { id: 'hukka', name: 'Hukka', icon: '💨' },
 ];
 
 const AdminAddMenuView = () => {
@@ -73,7 +73,7 @@ const AdminAddMenuView = () => {
 
     try {
       // Convert department to uppercase for database
-      const departmentUpper = department.toUpperCase() as 'KITCHEN' | 'DRINKS' | 'BEER' | 'SMOKES';
+      const departmentUpper = department.toUpperCase() as 'KITCHEN' | 'DRINK' | 'BAKERY' | 'HUKKA';
       
       const payload = {
         name,
@@ -207,36 +207,69 @@ const AdminAddMenuView = () => {
                 </div>
               </div>
 
-              {/* FOOD TYPE - RADIO BUTTONS */}
+              {/* FOOD TYPE - CHECKBOX */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Food Type
                   <RequiredAsterisk />
                 </label>
-                <div className="flex gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex items-center gap-6">
+                {/* Vegetarian Checkbox */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <span
+                    className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
+                    ${
+                      isVeg
+                        ? "border-green-600 bg-green-600"
+                        : "border-gray-300 bg-white"
+                    } mr-1`}
+                    style={{ transition: "background 0.15s, border 0.15s" }}
+                  >
                     <input
-                      type="radio"
-                      name="foodType"
+                      type="checkbox"
                       checked={isVeg === true}
                       onChange={() => setIsVeg(true)}
-                      className="w-4 h-4 text-orange-600 focus:ring-orange-500"
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
                       disabled={isSubmitting}
                     />
-                    <span>🟢 Vegetarian</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                    {isVeg === true && (
+                      <Check
+                        className="w-4 h-4 text-white pointer-events-none"
+                        strokeWidth={3}
+                      />
+                    )}
+                  </span>
+                  <span>Vegetarian</span>
+                </label>
+
+                {/* Non-Vegetarian Checkbox */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <span
+                    className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
+                    ${
+                      !isVeg
+                        ? "border-red-600 bg-red-600"
+                        : "border-gray-300 bg-white"
+                    } mr-1`}
+                    style={{ transition: "background 0.15s, border 0.15s" }}
+                  >
                     <input
-                      type="radio"
-                      name="foodType"
+                      type="checkbox"
                       checked={isVeg === false}
                       onChange={() => setIsVeg(false)}
-                      className="w-4 h-4 text-orange-600 focus:ring-orange-500"
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
                       disabled={isSubmitting}
                     />
-                    <span>🔴 Non-Vegetarian</span>
-                  </label>
-                </div>
+                    {isVeg === false && (
+                      <Check
+                        className="w-4 h-4 text-white pointer-events-none"
+                        strokeWidth={3}
+                      />
+                    )}
+                  </span>
+                  <span>Non-Vegetarian</span>
+                </label>
+              </div>
               </div>
 
               {/* IS AVAILABLE */}

@@ -1,4 +1,4 @@
-export type Department = "KITCHEN" | "DRINKS" | "BEER" | "SMOKES" | "OTHERS";
+export type Department = "KITCHEN" | "DRINK" | "BAKERY" | "HUKKA";
 
 export interface MenuItem {
   id: string;
