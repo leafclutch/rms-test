@@ -188,6 +188,18 @@ export const getTableInfoService = async (tableCode: string) => {
     };
 };
 
+export const hasActiveOrderService = async (tableId: string) => {
+    const activeOrder = await prisma.order.findFirst({
+        where: {
+            tableId,
+            status: {
+                in: ['pending', 'preparing', 'served']
+            }
+        }
+    });
+    return { hasActiveOrder: !!activeOrder };
+};
+
 export const initVirtualTableService = async (data: { type: TableType; identifier: string }) => {
     const { type, identifier } = data;
     if (!identifier) throw new AppError('Identifier (Name or Mobile) is required', 400);

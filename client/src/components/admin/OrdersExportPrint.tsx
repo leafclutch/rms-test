@@ -12,45 +12,36 @@ const OrdersExportPrint: React.FC<Props> = ({ orders }) => {
     const filteredOrders = orders.filter(o => o.paymentMethod !== 'CREDIT');
     const headers = ["Order ID", "Table", "Customer", "Status", "Payment Method", "Total Amount"];
 
-    // Calculate Summary (Cash and Online Only, ignoring Credit)
     const summary = filteredOrders.reduce((acc, o) => {
-      if (o.paymentMethod === 'CASH') {
-        const amt = Number(o.totalAmount || 0);
-        acc.cash += amt;
-        acc.total += amt;
-      } else if (o.paymentMethod === 'ONLINE') {
-        const amt = Number(o.totalAmount || 0);
-        acc.online += amt;
-        acc.total += amt;
-      } else if (o.paymentMethod === 'MIXED') {
         const cash = Number(o.cashAmount || 0);
         const online = Number(o.onlineAmount || 0);
         acc.cash += cash;
         acc.online += online;
         acc.total += (cash + online);
-      }
-      return acc;
+        return acc;
     }, { cash: 0, online: 0, total: 0 });
 
+    const totalOrders = filteredOrders.length;
+
     const rows = filteredOrders.map(o => [
-      o.id.slice(0, 8).toUpperCase(),
-      o.tableNumber?.startsWith('WALKIN') ? 'Walk-in' : (o.tableNumber || '-'),
-      o.customerName || (o.tableNumber?.startsWith('WALKIN') ? 'Walk-in' : '-'),
-      o.status.toUpperCase(),
-      o.paymentMethod || '-',
-      o.totalAmount,
+        o.id.slice(0, 8).toUpperCase(),
+        o.tableNumber?.startsWith('WALKIN') ? 'Walk-in' : (o.tableNumber || '-'),
+        o.customerName || (o.tableNumber?.startsWith('WALKIN') ? 'Walk-in' : '-'),
+        o.status.toUpperCase(),
+        o.paymentMethod || '-',
+        o.totalAmount,
     ]);
 
-    // Add summary rows
     rows.push([]);
-    rows.push(["Collection Summary", "", "", "", "", ""]);
-    rows.push(["Total Cash", "", "", "", "", summary.cash.toFixed(2)]);
-    rows.push(["Total Online", "", "", "", "", summary.online.toFixed(2)]);
-    rows.push(["Total Received", "", "", "", "", summary.total.toFixed(2)]);
+    rows.push(["Sales Summary"]);
+    rows.push(["Total Orders", totalOrders]);
+    rows.push(["Total Sales", summary.total.toFixed(2)]);
+    rows.push(["Cash Amount", summary.cash.toFixed(2)]);
+    rows.push(["Online Amount", summary.online.toFixed(2)]);
 
     const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers, ...rows].map(e => e.join(",")).join("\n");
+        "data:text/csv;charset=utf-8," +
+        [headers, ...rows].map(e => e.join(",")).join("\n");
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -59,7 +50,7 @@ const OrdersExportPrint: React.FC<Props> = ({ orders }) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+};
 
   // Print
   const handlePrint = () => {

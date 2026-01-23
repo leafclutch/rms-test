@@ -1,9 +1,10 @@
 
 import { useEffect, useState } from "react";
-import { RefreshCw, Search, History, ListFilter } from "lucide-react";
+import { RefreshCw, Search, History, ListFilter, Plus } from "lucide-react";
 import OrdersExportPrint from "../../components/admin/OrdersExportPrint";
 import ToggleSideBar from "../../components/admin/ToggleSideBar";
 import ViewOrderDetailsModal from "../../components/admin/ViewOrderDetailsModal";
+import ManualOrderModal from "../../components/admin/ManualOrderModal";
 import { useOrderStore } from "../../store/useOrderStore";
 
 const AdminOrdersView = () => {
@@ -29,13 +30,15 @@ const AdminOrdersView = () => {
 
     const [filterDate, setFilterDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [filterTable, setFilterTable] = useState<string>('all');
+    const [isManualOrderModalOpen, setIsManualOrderModalOpen] = useState(false);
 
     const orders = getFilteredOrders();
 
     // Advanced Filtering for Display
     const displayedOrders = orders.filter(order => {
+        if (!order.createdAt) return false;
         // Date Filter (Compare YYYY-MM-DD)
-        const dateObj = new Date(order.createdAt || Date.now());
+        const dateObj = new Date(order.createdAt);
         const orderDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
         const matchesDate = !filterDate || orderDate === filterDate;
 
@@ -48,7 +51,9 @@ const AdminOrdersView = () => {
 
     // Calculate Sales Summary (Always from History/Paid Orders for selected date, IGNORING table filter)
     const ordersForSummary = (historyOrders || []).filter(order => {
-        const dateObj = new Date(order.updatedAt || order.createdAt || Date.now());
+        const orderTimestamp = order.updatedAt || order.createdAt;
+        if (!orderTimestamp) return false;
+        const dateObj = new Date(orderTimestamp);
         const orderDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
         const matchesDate = !filterDate || orderDate === filterDate;
         return matchesDate;
@@ -66,7 +71,7 @@ const AdminOrdersView = () => {
     // Sales Summary Calculation
     const salesSummary = ordersForSummary.reduce((acc, order) => {
         let cash = Number(order.cashAmount || 0);
-        let online = Number(order.onlineAmount || 0);
+        const online = Number(order.onlineAmount || 0);
         let credit = Number(order.creditAmount || 0);
 
         // Requirement: "show credit only if the credit is on customers account"
@@ -115,6 +120,13 @@ const AdminOrdersView = () => {
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setIsManualOrderModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm bg-green-600 text-white hover:bg-green-700"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden sm:inline">Manual Orders</span>
+                    </button>
                     <button
                         onClick={() => setIsHistoryMode(!isHistoryMode)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm ${isHistoryMode
@@ -237,9 +249,6 @@ const AdminOrdersView = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* OrdersExportPrint moved to header */}
-
 
                 {/* Loading State */}
                 {isLoading && orders.length === 0 && (
@@ -379,6 +388,10 @@ const AdminOrdersView = () => {
                 isOpen={!!currentOrder}
                 order={currentOrder}
                 onClose={() => setCurrentOrder(null)}
+            />
+            <ManualOrderModal 
+                isOpen={isManualOrderModalOpen}
+                onClose={() => setIsManualOrderModalOpen(false)} 
             />
         </div>
     );

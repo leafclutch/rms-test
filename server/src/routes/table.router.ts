@@ -9,5 +9,6 @@ router.delete('/:id', protect, tableController.deleteTable);
 router.post('/generate-qr', tableController.generateQR);
 router.post('/init', tableController.initVirtualTable);
 router.get('/lookup', tableController.lookupTable);
+router.get('/:id/has-active-order', protect, tableController.hasActiveOrder);
 
 export default router;

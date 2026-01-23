@@ -31,3 +31,8 @@ export async function lookupTableApi(tableCode: string) {
   return response.data;
 }
 
+export async function hasActiveOrderApi(tableId: string) {
+    const response = await api.get(`/tables/${tableId}/has-active-order`);
+    return response.data;
+}
+

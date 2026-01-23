@@ -19,15 +19,16 @@ import GenerateQr from '../pages/admin/GenerateQr';
 import CustomerDetails from '../pages/admin/CustomerDetails';
 import LandingPage from '../pages/LandingPage';
 import ReportsView from '../pages/admin/ReportsView';
+import AdminCreateOrderView from '../pages/admin/AdminCreateOrderView';
 
 // Admin Pages
 import OnlineEntry from '../pages/customer/OnlineEntry';
 
 export const router = createBrowserRouter([
-  // Landing Page
+  // Landing Page - Redirect to /admin/login instead of rendering login directly
   {
     path: '/',
-    element: <LandingPage />
+    element: <Navigate to="/admin/login" replace />
   },
   // Online Entry
   {
@@ -114,6 +115,10 @@ export const router = createBrowserRouter([
       {
         path: 'reports',
         element: <ReportsView />
+      },
+      {
+        path: 'create-order',
+        element: <AdminCreateOrderView />
       }
     ]
   },
