@@ -151,7 +151,7 @@ const CustomerMenuView: React.FC = () => {
   const handleAddToCart = (item: MenuItem) => {
     addToCart(item);
     setNotification({ message: `${item.name}  added `, show: true });
-    
+
     // Clear any existing timeout if needed (optional optimization)
     setTimeout(() => {
       setNotification((prev) => ({ ...prev, show: false }));
@@ -293,7 +293,19 @@ const CustomerMenuView: React.FC = () => {
               </div>
 
               {/* Item info */}
-              <h3 className="font-bold text-lg truncate">{item.name}</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg truncate">{item.name}</h3>
+                {item.isVeg === true && (
+                  <div className="flex items-center justify-center w-4 h-4 border border-green-600 p-0.5 flex-shrink-0">
+                    <div className="w-full h-full bg-green-600 rounded-full" />
+                  </div>
+                )}
+                {item.isVeg === false && (
+                  <div className="flex items-center justify-center w-4 h-4 border border-red-600 p-0.5 flex-shrink-0">
+                    <div className="w-full h-full bg-red-600 rounded-full" />
+                  </div>
+                )}
+              </div>
               <p className="text-xs text-gray-500">{item.category}</p>
               <p className="text-[#16516f] font-bold text-lg">Rs. {item.price}</p>
               <p className="text-gray-600 text-sm line-clamp-2">{item.description}</p>

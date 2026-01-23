@@ -14,7 +14,9 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
   const [name, setName] = useState("");
   const [category, setCategory] = useState(CATEGORY_OPTIONS[0]);
   const [price, setPrice] = useState<number | "">("");
-  const [isVeg, setIsVeg] = useState(true);
+  const [department, setDepartment] = useState<string>("KITCHEN");
+  const [isVeg, setIsVeg] = useState<boolean | null>(true);
+  const [isSpecial, setIsSpecial] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isAvailable, setIsAvailable] = useState(true);
   const [preview, setPreview] = useState<string | null>(null);
@@ -35,29 +37,30 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
   };
 
   const handleAdd = () => {
-    if (!name || !category || !price || !imageFile) {
-      alert("Please fill all fields and upload an image");
+    if (!name || !category || !price) {
+      alert("Please fill all fields");
       return;
     }
-
-    // Convert file to a URL or send it to backend
-    const imageUrl = preview || "";
 
     onAddItem({
       name,
       category,
       price: Number(price),
+      department: department as any,
       isVeg,
-      image: imageUrl,
       isAvailable,
-      description: "", // optional
+      isSpecial,
+      image: preview || "",
+      description: "",
     });
 
     // Reset fields
     setName("");
     setCategory(CATEGORY_OPTIONS[0]);
     setPrice("");
+    setDepartment("KITCHEN");
     setIsVeg(true);
+    setIsSpecial(false);
     setImageFile(null);
     setPreview(null);
     setIsAvailable(true);
@@ -115,6 +118,18 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
             className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none"
           />
 
+          {/* Department */}
+          <select
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
+            className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none bg-white font-medium"
+          >
+            <option value="KITCHEN">Kitchen</option>
+            <option value="DRINK">Drink</option>
+            <option value="BAKERY">Bakery</option>
+            <option value="HUKKA">Hookah</option>
+          </select>
+
           {/* Image Upload */}
           <div className="flex flex-col gap-2">
             <label className="text-gray-700 font-medium">Upload Image:</label>
@@ -144,26 +159,49 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
             )}
           </div>
 
-          {/* Veg Toggle */}
-          <div className="flex items-center gap-2">
-            <label className="text-gray-700 font-medium">Veg:</label>
-            <input
-              type="checkbox"
-              checked={isVeg}
-              onChange={(e) => setIsVeg(e.target.checked)}
-              className="w-5 h-5 accent-orange-600"
-            />
+          {/* Food Type */}
+          <div className="flex flex-col gap-2">
+            <label className="text-gray-700 font-medium text-sm">Food Type:</label>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <span className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors ${isVeg === true ? "border-green-600 bg-green-600" : "border-gray-300 bg-white"}`}>
+                  <input type="checkbox" checked={isVeg === true} onChange={() => setIsVeg(isVeg === true ? null : true)} className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" />
+                  {isVeg === true && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                </span>
+                <span className="text-sm font-medium">Veg</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <span className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors ${isVeg === false ? "border-red-600 bg-red-600" : "border-gray-300 bg-white"}`}>
+                  <input type="checkbox" checked={isVeg === false} onChange={() => setIsVeg(isVeg === false ? null : false)} className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" />
+                  {isVeg === false && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                </span>
+                <span className="text-sm font-medium">Non-Veg</span>
+              </label>
+            </div>
           </div>
 
           {/* Availability Toggle */}
           <div className="flex items-center gap-2">
-            <label className="text-gray-700 font-medium">Available:</label>
             <input
               type="checkbox"
               checked={isAvailable}
               onChange={(e) => setIsAvailable(e.target.checked)}
-              className="w-5 h-5 accent-orange-600"
+              id="add-available"
+              className="w-5 h-5 accent-orange-600 cursor-pointer"
             />
+            <label htmlFor="add-available" className="text-gray-700 font-medium cursor-pointer">Available</label>
+          </div>
+
+          {/* Special Toggle */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={isSpecial}
+              onChange={(e) => setIsSpecial(e.target.checked)}
+              id="add-special"
+              className="w-5 h-5 accent-orange-600 cursor-pointer"
+            />
+            <label htmlFor="add-special" className="text-gray-700 font-medium cursor-pointer">Today's Special</label>
           </div>
 
           {/* Add Button */}

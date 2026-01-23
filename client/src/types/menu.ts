@@ -9,7 +9,7 @@ export interface MenuItem {
   quantity?: number;
   image?: string;
   description?: string;
-  isVeg?: boolean;
+  isVeg?: boolean | null;
   isAvailable: boolean;
   isSpecial: boolean;
   prepTime?: number;

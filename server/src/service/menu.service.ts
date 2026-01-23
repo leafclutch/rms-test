@@ -42,7 +42,7 @@ export const createMenuItemService = async (data: {
     department: Department;
     isAvailable?: boolean;
     isSpecial?: boolean;
-    isVeg?: boolean;
+    isVeg?: boolean | null;
 }) => {
     const { name, categoryId, price, department, isAvailable, isSpecial, isVeg } = data;
 
@@ -67,8 +67,8 @@ export const createMenuItemService = async (data: {
             department,
             isAvailable: isAvailable !== undefined ? String(isAvailable) === 'true' : true,
             isSpecial: isSpecial !== undefined ? String(isSpecial) === 'true' : false,
-            isVeg: isVeg !== undefined ? String(isVeg) === 'true' : true,
-        },
+            isVeg: isVeg === null ? null : (isVeg !== undefined ? (typeof isVeg === 'string' ? String(isVeg) === 'true' : Boolean(isVeg)) : true),
+        } as any,
         include: {
             category: true,
         },
@@ -90,7 +90,7 @@ export const updateMenuItemService = async (
         price?: number;
         isAvailable?: boolean;
         isSpecial?: boolean;
-        isVeg?: boolean;
+        isVeg?: boolean | null;
     }
 ) => {
     if (!id) {
@@ -117,11 +117,18 @@ export const updateMenuItemService = async (
         }
     }
 
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+    if (data.department !== undefined) updateData.department = data.department;
+    if (data.price !== undefined) updateData.price = Number(data.price);
+    if (data.isAvailable !== undefined) updateData.isAvailable = typeof data.isAvailable === 'string' ? String(data.isAvailable) === 'true' : Boolean(data.isAvailable);
+    if (data.isSpecial !== undefined) updateData.isSpecial = typeof data.isSpecial === 'string' ? String(data.isSpecial) === 'true' : Boolean(data.isSpecial);
+    if (data.isVeg !== undefined) updateData.isVeg = data.isVeg === null ? null : (typeof data.isVeg === 'string' ? String(data.isVeg) === 'true' : Boolean(data.isVeg));
+
     const updatedItem = await prisma.menuItem.update({
         where: { id },
-        data: {
-            ...data
-        },
+        data: updateData,
         include: {
             category: true,
         },

@@ -33,7 +33,7 @@ const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
   const [categoryId, setCategoryId] = useState("");
   const [department, setDepartment] = useState(""); // NEW: Department state
   const [price, setPrice] = useState<number | "">("");
-  const [isVeg, setIsVeg] = useState(true);
+  const [isVeg, setIsVeg] = useState<boolean | null>(true);
   const [isAvailable, setIsAvailable] = useState(true);
   const [isSpecial, setIsSpecial] = useState(false);
 
@@ -175,61 +175,53 @@ const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
             {/* Food Type (Dual Checkbox) */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">
-                Food Type <span className="text-orange-600">*</span>
+                Food Type
               </label>
               <div className="flex items-center gap-6">
                 {/* Vegetarian Checkbox */}
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <span
                     className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
-                    ${
-                      isVeg
+                    ${isVeg === true
                         ? "border-green-600 bg-green-600"
                         : "border-gray-300 bg-white"
-                    } mr-1`}
+                      } mr-1`}
                     style={{ transition: "background 0.15s, border 0.15s" }}
                   >
                     <input
                       type="checkbox"
                       checked={isVeg === true}
-                      onChange={() => setIsVeg(true)}
+                      onChange={() => setIsVeg(isVeg === true ? null : true)}
                       className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
                     />
                     {isVeg === true && (
-                      <Check
-                        className="w-4 h-4 text-white pointer-events-none"
-                        strokeWidth={3}
-                      />
+                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
                     )}
                   </span>
-                  <span className="text-sm font-medium">Vegetarian</span>
+                  <span className="text-sm font-medium">Veg</span>
                 </label>
 
                 {/* Non-Vegetarian Checkbox */}
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <span
                     className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
-                    ${
-                      !isVeg
+                    ${isVeg === false
                         ? "border-red-600 bg-red-600"
                         : "border-gray-300 bg-white"
-                    } mr-1`}
+                      } mr-1`}
                     style={{ transition: "background 0.15s, border 0.15s" }}
                   >
                     <input
                       type="checkbox"
                       checked={isVeg === false}
-                      onChange={() => setIsVeg(false)}
+                      onChange={() => setIsVeg(isVeg === false ? null : false)}
                       className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
                     />
                     {isVeg === false && (
-                      <Check
-                        className="w-4 h-4 text-white pointer-events-none"
-                        strokeWidth={3}
-                      />
+                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
                     )}
                   </span>
-                  <span className="text-sm font-medium">Non-Vegetarian</span>
+                  <span className="text-sm font-medium">Non-Veg</span>
                 </label>
               </div>
             </div>

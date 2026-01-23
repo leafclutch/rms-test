@@ -20,7 +20,7 @@ const AdminAddMenuView = () => {
   const [price, setPrice] = useState<number | "">("");
   const [categoryId, setCategoryId] = useState("");
   const [department, setDepartment] = useState(""); // NEW: Department state
-  const [isVeg, setIsVeg] = useState(true);
+  const [isVeg, setIsVeg] = useState<boolean | null>(true);
   const [isSpecial, setIsSpecial] = useState(false);
   const [isAvailable, setIsAvailable] = useState(true);
   const [priceError, setPriceError] = useState<string>("");
@@ -74,7 +74,7 @@ const AdminAddMenuView = () => {
     try {
       // Convert department to uppercase for database
       const departmentUpper = department.toUpperCase() as 'KITCHEN' | 'DRINK' | 'BAKERY' | 'HUKKA';
-      
+
       const payload = {
         name,
         price,
@@ -147,9 +147,8 @@ const AdminAddMenuView = () => {
                     onChange={handlePriceChange}
                     type="number"
                     placeholder="0"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 ${
-                      priceError ? "border-red-500" : ""
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 ${priceError ? "border-red-500" : ""
+                      }`}
                     disabled={isSubmitting}
                   />
                   {priceError && (
@@ -213,63 +212,55 @@ const AdminAddMenuView = () => {
                   Food Type
                   <RequiredAsterisk />
                 </label>
-              <div className="flex items-center gap-6">
-                {/* Vegetarian Checkbox */}
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <span
-                    className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
-                    ${
-                      isVeg
-                        ? "border-green-600 bg-green-600"
-                        : "border-gray-300 bg-white"
-                    } mr-1`}
-                    style={{ transition: "background 0.15s, border 0.15s" }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isVeg === true}
-                      onChange={() => setIsVeg(true)}
-                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                      disabled={isSubmitting}
-                    />
-                    {isVeg === true && (
-                      <Check
-                        className="w-4 h-4 text-white pointer-events-none"
-                        strokeWidth={3}
+                <div className="flex items-center gap-6">
+                  {/* Vegetarian Checkbox */}
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <span
+                      className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
+                    ${isVeg === true
+                          ? "border-green-600 bg-green-600"
+                          : "border-gray-300 bg-white"
+                        } mr-1`}
+                      style={{ transition: "background 0.15s, border 0.15s" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isVeg === true}
+                        onChange={() => setIsVeg(isVeg === true ? null : true)}
+                        className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                        disabled={isSubmitting}
                       />
-                    )}
-                  </span>
-                  <span>Vegetarian</span>
-                </label>
+                      {isVeg === true && (
+                        <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                      )}
+                    </span>
+                    <span className="text-sm font-medium text-gray-700">Veg</span>
+                  </label>
 
-                {/* Non-Vegetarian Checkbox */}
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <span
-                    className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
-                    ${
-                      !isVeg
-                        ? "border-red-600 bg-red-600"
-                        : "border-gray-300 bg-white"
-                    } mr-1`}
-                    style={{ transition: "background 0.15s, border 0.15s" }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isVeg === false}
-                      onChange={() => setIsVeg(false)}
-                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                      disabled={isSubmitting}
-                    />
-                    {isVeg === false && (
-                      <Check
-                        className="w-4 h-4 text-white pointer-events-none"
-                        strokeWidth={3}
+                  {/* Non-Vegetarian Checkbox */}
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <span
+                      className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
+                    ${isVeg === false
+                          ? "border-red-600 bg-red-600"
+                          : "border-gray-300 bg-white"
+                        } mr-1`}
+                      style={{ transition: "background 0.15s, border 0.15s" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isVeg === false}
+                        onChange={() => setIsVeg(isVeg === false ? null : false)}
+                        className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                        disabled={isSubmitting}
                       />
-                    )}
-                  </span>
-                  <span>Non-Vegetarian</span>
-                </label>
-              </div>
+                      {isVeg === false && (
+                        <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                      )}
+                    </span>
+                    <span className="text-sm font-medium text-gray-700">Non-Veg</span>
+                  </label>
+                </div>
               </div>
 
               {/* IS AVAILABLE */}
@@ -278,11 +269,10 @@ const AdminAddMenuView = () => {
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <span
                       className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
-                      ${
-                        isAvailable
+                      ${isAvailable
                           ? "border-orange-600 bg-orange-600"
                           : "border-gray-300 bg-white"
-                      } mr-1`}
+                        } mr-1`}
                       style={{ transition: "background 0.15s, border 0.15s" }}
                     >
                       <input
@@ -313,11 +303,10 @@ const AdminAddMenuView = () => {
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <span
                       className={`relative inline-flex items-center justify-center w-5 h-5 border-2 rounded-md transition-colors
-        ${
-          isSpecial
-            ? "border-orange-600 bg-orange-600"
-            : "border-gray-300 bg-white"
-        } mr-1`}
+        ${isSpecial
+                          ? "border-orange-600 bg-orange-600"
+                          : "border-gray-300 bg-white"
+                        } mr-1`}
                       style={{ transition: "background 0.15s, border 0.15s" }}
                     >
                       <input

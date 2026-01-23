@@ -192,7 +192,16 @@ const AdminMenuView: React.FC = () => {
                     </button>
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-lg">{item.name}</h3>
-                      <span>{item.isVeg ? "🟢" : "🔴"}</span>
+                      {item.isVeg === true && (
+                        <div className="flex items-center justify-center w-4 h-4 border border-green-600 p-0.5">
+                          <div className="w-full h-full bg-green-600 rounded-full" />
+                        </div>
+                      )}
+                      {item.isVeg === false && (
+                        <div className="flex items-center justify-center w-4 h-4 border border-red-600 p-0.5">
+                          <div className="w-full h-full bg-red-600 rounded-full" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-sm text-gray-600">{item.category}</p>
