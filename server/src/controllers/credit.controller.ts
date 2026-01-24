@@ -105,3 +105,20 @@ export const deleteAccount = async (req: Request, res: Response, next: NextFunct
         next(error);
     }
 };
+export const recordCharge = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const accountId = req.params.accountId as string;
+        const { amount, description } = req.body;
+        if (!accountId) throw new AppError('Account ID is required', 400);
+        if (amount === undefined) throw new AppError('Charge amount is required', 400);
+
+        const result = await creditService.recordCreditCharge(accountId, Number(amount), description as string | undefined);
+        res.status(200).json({
+            status: 'success',
+            message: 'Debt recorded successfully',
+            data: result
+        });
+    } catch (error) {
+        next(error);
+    }
+};

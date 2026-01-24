@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "library"
 }
 
@@ -7,8 +7,208 @@ datasource db {
   provider = "postgresql"
 }
 
+model Profile {
+  id        String   @id @db.Uuid
+  email     String   @unique
+  password  String
+  role      Role     @default(admin)
+  createdAt DateTime @default(now())
 
-// ENUMS
+  @@map("profiles")
+}
+
+model Table {
+  id        String    @id @default(uuid()) @db.Uuid
+  tableCode String    @unique
+  tableType TableType
+  qrToken   String    @unique
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  orders    Order[]
+
+  @@map("tables")
+}
+
+model MenuCategory {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  items     MenuItem[]
+
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  categoryId  String       @db.Uuid
+  price       Decimal
+  department  Department   @default(KITCHEN)
+  isAvailable Boolean      @default(true)
+  isSpecial   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  isVeg       Boolean?     @default(true)
+  recipes     ItemRecipe[]
+  category    MenuCategory @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+
+  @@index([department])
+  @@map("menu_items")
+}
+
+model Customer {
+  id          String              @id @default(uuid()) @db.Uuid
+  fullName    String
+  phoneNumber String              @unique
+  totalDue    Decimal             @default(0)
+  createdAt   DateTime            @default(now())
+  ledger      CreditTransaction[]
+  settlements DebtSettlement[]
+  orders      Order[]
+
+  @@map("customers")
+}
+
+model Order {
+  id              String              @id @default(uuid()) @db.Uuid
+  tableId         String              @db.Uuid
+  customerId      String?             @db.Uuid
+  customerPhone   String?
+  status          OrderStatus         @default(pending)
+  totalAmount     Decimal             @default(0)
+  discountAmount  Decimal             @default(0)
+  discountValue   Decimal?
+  discountType    String?
+  dueAmount       Decimal             @default(0)
+  cashAmount      Decimal             @default(0)
+  onlineAmount    Decimal             @default(0)
+  paymentMethod   PaymentMethod?
+  paymentDetails  String?
+  customerMessage String?
+  servedItemCount Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  customerName    String?
+  creditAmount    Decimal             @default(0)
+  settledAmount   Decimal             @default(0)
+  creditEntries   CreditTransaction[]
+  settlements     DebtSettlement[]
+  items           OrderItem[]
+  customer        Customer?           @relation(fields: [customerId], references: [id])
+  table           Table               @relation(fields: [tableId], references: [id])
+  payments        Payment[]
+
+  @@index([tableId, status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id            String   @id @default(uuid()) @db.Uuid
+  orderId       String   @db.Uuid
+  menuItemId    String   @db.Uuid
+  quantity      Int
+  priceSnapshot Decimal
+  createdAt     DateTime @default(now())
+  menuItem      MenuItem @relation(fields: [menuItemId], references: [id])
+  order         Order    @relation(fields: [orderId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id           String        @id @default(uuid()) @db.Uuid
+  orderId      String        @db.Uuid
+  method       PaymentMethod
+  cashAmount   Decimal       @default(0)
+  onlineAmount Decimal       @default(0)
+  createdAt    DateTime      @default(now())
+  order        Order         @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model CreditTransaction {
+  id          String                @id @default(uuid()) @db.Uuid
+  customerId  String                @db.Uuid
+  orderId     String?               @db.Uuid
+  amount      Decimal
+  type        CreditTransactionType @default(CHARGE)
+  description String?
+  createdAt   DateTime              @default(now())
+  customer    Customer              @relation(fields: [customerId], references: [id])
+  order       Order?                @relation(fields: [orderId], references: [id])
+
+  @@map("credit_transactions")
+}
+
+model InventoryItem {
+  id           String                 @id @default(uuid()) @db.Uuid
+  name         String                 @unique
+  currentStock Int                    @default(0)
+  minimumStock Int                    @default(5)
+  unit         String                 @default("pcs")
+  updatedAt    DateTime               @updatedAt
+  transactions InventoryTransaction[]
+  recipes      ItemRecipe[]
+
+  @@map("inventory_items")
+}
+
+model InventoryTransaction {
+  id              String          @id @default(uuid()) @db.Uuid
+  inventoryItemId String          @db.Uuid
+  type            TransactionType
+  quantity        Int
+  referenceId     String?
+  createdAt       DateTime        @default(now())
+  inventoryItem   InventoryItem   @relation(fields: [inventoryItemId], references: [id])
+
+  @@map("inventory_transactions")
+}
+
+model ItemRecipe {
+  id               String        @id @default(uuid()) @db.Uuid
+  menuItemId       String        @db.Uuid
+  inventoryItemId  String        @db.Uuid
+  quantityRequired Int           @default(1)
+  inventoryItem    InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  menuItem         MenuItem      @relation(fields: [menuItemId], references: [id])
+
+  @@unique([menuItemId, inventoryItemId])
+  @@map("item_recipes")
+}
+
+model PurchaseRecord {
+  id              String   @id @default(uuid()) @db.Uuid
+  itemName        String
+  supplierName    String?
+  supplierPhone   String?
+  quantity        Decimal
+  unit            String
+  costPerUnit     Decimal
+  totalCost       Decimal
+  amountPaid      Decimal  @default(0)
+  remainingAmount Decimal  @default(0)
+  purchaseDate    DateTime @default(now())
+  paymentStatus   String   @default("pending")
+
+  @@map("purchase_records")
+}
+
+model DebtSettlement {
+  id          String        @id @default(uuid()) @db.Uuid
+  customerId  String        @db.Uuid
+  orderId     String?       @db.Uuid
+  amount      Decimal
+  method      PaymentMethod @default(CASH)
+  description String?
+  createdAt   DateTime      @default(now())
+  customer    Customer      @relation(fields: [customerId], references: [id])
+  order       Order?        @relation(fields: [orderId], references: [id])
+
+  @@map("debt_settlements")
+}
 
 enum Role {
   admin
@@ -47,218 +247,9 @@ enum TransactionType {
   RETURN
 }
 
-
-// ADMIN PROFILE
-model Profile {
-  id        String   @id @db.Uuid 
-  email     String   @unique
-  password  String
-  role      Role     @default(admin)
-  createdAt DateTime @default(now())
-
-  @@map("profiles")
-}
-
-
-// TABLES (Physical + Virtual)
-model Table {
-  id        String    @id @default(uuid()) @db.Uuid
-  tableCode String    @unique
-  tableType TableType
-  qrToken   String    @unique
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-
-  orders    Order[]
-
-  @@map("tables")
-}
-
-
-// MENU
-model MenuCategory {
-  id        String     @id @default(uuid()) @db.Uuid
-  name      String     @unique
-  createdAt DateTime   @default(now())
-
-  items     MenuItem[]
-
-  @@map("menu_categories")
-}
-
-model MenuItem {
-  id          String        @id @default(uuid()) @db.Uuid
-  name        String
-  categoryId  String        @db.Uuid
-  price       Decimal
-  isAvailable Boolean       @default(true)
-  isSpecial   Boolean       @default(false)
-  isVeg       Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  category    MenuCategory  @relation(fields: [categoryId], references: [id])
-  orderItems  OrderItem[]
-  recipes     ItemRecipe[]
-
-  @@map("menu_items")
-}
-
-
-// CUSTOMERS (CREDIT / LEDGER)
-model Customer {
-  id          String    @id @default(uuid()) @db.Uuid
-  fullName    String
-  phoneNumber String    @unique
-  totalDue    Decimal   @default(0)
-  createdAt   DateTime  @default(now())
-
-  orders      Order[]
-  ledger      CreditTransaction[]
-
-  @@map("customers")
-}
-
-
-// ORDERS
-model Order {
-  id               String        @id @default(uuid()) @db.Uuid
-  tableId          String        @db.Uuid
-  customerId       String?       @db.Uuid
-  customerPhone    String?
-  status           OrderStatus   @default(pending)
-
-  totalAmount      Decimal       @default(0)
-  discountAmount   Decimal       @default(0)
-  dueAmount        Decimal       @default(0)
-
-  cashAmount       Decimal       @default(0)
-  onlineAmount     Decimal       @default(0)
-
-  paymentMethod    PaymentMethod?
-  paymentDetails   String?
-  customerMessage  String?
-
-  servedItemCount  Int           @default(0)
-
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-
-  table            Table         @relation(fields: [tableId], references: [id])
-  customer         Customer?     @relation(fields: [customerId], references: [id])
-  items            OrderItem[]
-  payments         Payment[]
-  creditEntries    CreditTransaction[]
-
-  @@index([tableId, status])
-  @@map("orders")
-}
-
-
-// ORDER ITEMS
-model OrderItem {
-  id            String   @id @default(uuid()) @db.Uuid
-  orderId       String   @db.Uuid
-  menuItemId    String   @db.Uuid
-  quantity      Int
-  priceSnapshot Decimal
-  createdAt     DateTime @default(now())
-
-  order         Order    @relation(fields: [orderId], references: [id])
-  menuItem      MenuItem @relation(fields: [menuItemId], references: [id])
-
-  @@map("order_items")
-}
-
-
-// PAYMENTS
-model Payment {
-  id            String        @id @default(uuid()) @db.Uuid
-  orderId       String        @db.Uuid
-  method        PaymentMethod
-  cashAmount    Decimal       @default(0)
-  onlineAmount  Decimal       @default(0)
-  createdAt     DateTime      @default(now())
-
-  order         Order         @relation(fields: [orderId], references: [id])
-
-  @@map("payments")
-}
-
-
-// CREDIT LEDGER
-model CreditTransaction {
-  id          String                @id @default(uuid()) @db.Uuid
-  customerId  String                @db.Uuid
-  orderId     String?               @db.Uuid
-  amount      Decimal
-  type        CreditTransactionType @default(CHARGE)
-  description String?
-  createdAt   DateTime              @default(now())
-
-  customer    Customer @relation(fields: [customerId], references: [id])
-  order       Order?   @relation(fields: [orderId], references: [id])
-
-  @@map("credit_transactions")
-}
-
-
-// INVENTORY & STOCK
-model InventoryItem {
-  id           String   @id @default(uuid()) @db.Uuid
-  name         String   @unique
-  currentStock Int      @default(0)
-  minimumStock Int      @default(5)
-  unit         String   @default("pcs")
-  updatedAt    DateTime @updatedAt
-
-  transactions InventoryTransaction[]
-  recipes      ItemRecipe[]
-
-  @@map("inventory_items")
-}
-
-model InventoryTransaction {
-  id              String          @id @default(uuid()) @db.Uuid
-  inventoryItemId String          @db.Uuid
-  type            TransactionType
-  quantity        Int
-  referenceId     String?
-  createdAt       DateTime        @default(now())
-
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
-
-  @@map("inventory_transactions")
-}
-
-model ItemRecipe {
-  id               String        @id @default(uuid()) @db.Uuid
-  menuItemId       String        @db.Uuid
-  inventoryItemId  String        @db.Uuid
-  quantityRequired Int           @default(1)
-
-  menuItem      MenuItem      @relation(fields: [menuItemId], references: [id])
-  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id])
-
-  @@unique([menuItemId, inventoryItemId])
-  @@map("item_recipes")
-}
-
-
-// PURCHASES
-model PurchaseRecord {
-  id              String   @id @default(uuid()) @db.Uuid
-  itemName        String
-  supplierName    String?
-  supplierPhone   String?
-  quantity        Decimal
-  unit            String
-  costPerUnit     Decimal
-  totalCost       Decimal
-  amountPaid      Decimal  @default(0)
-  remainingAmount Decimal  @default(0)
-  purchaseDate    DateTime @default(now())
-  paymentStatus   String   @default("pending")
-
-  @@map("purchase_records")
+enum Department {
+  KITCHEN
+  DRINK
+  BAKERY
+  HUKKA
 }

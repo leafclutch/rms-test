@@ -90,23 +90,54 @@ export const deductStockForOrderService = async (orderId: string, orderItems: an
 
         if (recipe) {
             // Deduct Stock
-             const deductAmount = recipe.quantityRequired * item.quantity;
-             
-             // Update Stock
-             await prisma.inventoryItem.update({
-                 where: { id: recipe.inventoryItemId },
-                 data: { currentStock: { decrement: deductAmount } }
-             });
+            const deductAmount = recipe.quantityRequired * item.quantity;
 
-             // Record Transaction
-             await prisma.inventoryTransaction.create({
-                 data: {
-                     inventoryItemId: recipe.inventoryItemId,
-                     type: 'ORDER_CONSUMPTION',
-                     quantity: -deductAmount, 
-                     referenceId: orderId
-                 }
-             });
+            // Update Stock
+            await prisma.inventoryItem.update({
+                where: { id: recipe.inventoryItemId },
+                data: { currentStock: { decrement: deductAmount } }
+            });
+
+            // Record Transaction
+            await prisma.inventoryTransaction.create({
+                data: {
+                    inventoryItemId: recipe.inventoryItemId,
+                    type: 'ORDER_CONSUMPTION',
+                    quantity: -deductAmount,
+                    referenceId: orderId
+                }
+            });
+        }
+    }
+};
+
+// Helper: Restore Stock (called when cancelling or reducing order)
+export const restoreStockForOrderService = async (orderId: string, orderItems: any[]) => {
+    for (const item of orderItems) {
+        // Find Recipe
+        const recipe = await prisma.itemRecipe.findFirst({
+            where: { menuItemId: item.menuItemId }
+        });
+
+        if (recipe) {
+            // Restore Stock
+            const restoreAmount = recipe.quantityRequired * item.quantity;
+
+            // Update Stock
+            await prisma.inventoryItem.update({
+                where: { id: recipe.inventoryItemId },
+                data: { currentStock: { increment: restoreAmount } }
+            });
+
+            // Record Transaction
+            await prisma.inventoryTransaction.create({
+                data: {
+                    inventoryItemId: recipe.inventoryItemId,
+                    type: 'ADJUSTMENT',
+                    quantity: restoreAmount,
+                    referenceId: orderId
+                }
+            });
         }
     }
 };

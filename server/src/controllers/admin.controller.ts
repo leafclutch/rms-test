@@ -15,10 +15,29 @@ export const serveOrder = async (req: Request, res: Response, next: NextFunction
         const { orderId } = req.params;
         if (!orderId || typeof orderId !== 'string') throw new Error('Valid Order ID is required'); // Should be handled by route param usually
         const result = await adminService.serveOrderService(orderId);
-        
+
         try {
             const { getIO } = await import('../socket.ts');
             getIO().emit('order:served', { orderId });
+        } catch (e) {
+            console.error("Socket emit failed", e);
+        }
+
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const preparingOrder = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { orderId } = req.params;
+        if (!orderId || typeof orderId !== 'string') throw new Error('Valid Order ID is required');
+        const result = await adminService.preparingOrderService(orderId);
+
+        try {
+            const { getIO } = await import('../socket.ts');
+            getIO().emit('order:preparing', { orderId });
         } catch (e) {
             console.error("Socket emit failed", e);
         }

@@ -15,82 +15,7 @@ interface CreateOrderInput {
     customerName?: string;
 }
 
-export const createOrUpdateOrderService = async (data: CreateOrderInput) => {
-    const { tableCode, items, mobileNumber, customerName } = data;
-
-    // 1. Find Table
-    const table = await prisma.table.findUnique({ where: { tableCode } });
-    if (!table) throw new AppError('Table not found', 404);
-
-    // 2. Check for OPEN (pending/preparing) order.
-    const activeStatuses: any[] = ['pending', 'preparing', 'served'];
-
-    let order: any = await prisma.order.findFirst({
-        where: {
-            tableId: table.id,
-            status: { in: activeStatuses },
-        },
-        include: { items: true }
-    });
-
-    // 3. Create or Update
-    if (!order) {
-        order = await prisma.order.create({
-            data: {
-                tableId: table.id,
-                customerPhone: mobileNumber ?? null,
-                status: 'pending',
-            },
-            include: { items: true }
-        });
-    }
-
-    if (!order) throw new AppError('Failed to create or retrieve order', 500);
-
-    // Add Items
-    let currentTotal = Number(order.totalAmount);
-
-    for (const item of items) {
-        // Fetch price
-        const menuItem = await prisma.menuItem.findUnique({ where: { id: item.menuItemId } });
-        if (!menuItem) continue;
-
-        const price = Number(menuItem.price);
-        const lineTotal = price * item.quantity;
-
-        // Upsert OrderItem: If same item exists in order, increment qty
-        const existingItem = await prisma.orderItem.findFirst({
-            where: { orderId: order.id, menuItemId: item.menuItemId }
-        });
-
-        if (existingItem) {
-            await prisma.orderItem.update({
-                where: { id: existingItem.id },
-                data: { quantity: { increment: item.quantity } }
-            });
-        } else {
-            await prisma.orderItem.create({
-                data: {
-                    orderId: order.id,
-                    menuItemId: item.menuItemId,
-                    quantity: item.quantity,
-                    priceSnapshot: price
-                }
-            });
-        }
-
-        currentTotal += lineTotal;
-    }
-
-    // 5. Update Order Total
-    await prisma.order.update({
-        where: { id: order.id },
-        data: { totalAmount: currentTotal }
-    });
-
-    //Notify Admin (Socket.io) - TODO
-    return { message: 'Order placed successfully', orderId: order.id };
-};
+// Redundant service removed. Use order.service.ts for all order creations.
 
 
 
@@ -118,7 +43,27 @@ export const serveOrderService = async (orderId: string) => {
         where: { id: orderId },
         data: { status: 'served' }
     });
+
+    try {
+        const { getIO } = await import('../socket.ts');
+        getIO().emit('order:updated', { orderId, status: 'served' });
+    } catch (e) { console.error("Socket error", e); }
+
     return { message: 'Order marked as served', order };
+};
+
+export const preparingOrderService = async (orderId: string) => {
+    const order = await prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'preparing' }
+    });
+
+    try {
+        const { getIO } = await import('../socket.ts');
+        getIO().emit('order:updated', { orderId, status: 'preparing' });
+    } catch (e) { console.error("Socket error", e); }
+
+    return { message: 'Order is being prepared', order };
 };
 
 export const getBillService = async (orderId: string) => {
@@ -172,6 +117,12 @@ export const reduceOrderItemService = async (orderId: string, menuItemId: string
         }
 
         const newTotal = await recalculateOrderTotal(orderId, tx);
+
+        try {
+            const { getIO } = await import('../socket.ts');
+            getIO().emit('order:updated', { orderId, totalAmount: newTotal });
+        } catch (e) { console.error("Socket error", e); }
+
         return { message: 'Item quantity reduced', newTotal };
     });
 };
@@ -187,20 +138,34 @@ export const cancelOrderItemService = async (orderId: string, menuItemId: string
         await tx.orderItem.delete({ where: { id: orderItem.id } });
 
         const newTotal = await recalculateOrderTotal(orderId, tx);
+
+        try {
+            const { getIO } = await import('../socket.ts');
+            getIO().emit('order:updated', { orderId, totalAmount: newTotal });
+        } catch (e) { console.error("Socket error", e); }
+
         return { message: 'Item removed from order', newTotal };
     });
 };
 
 export const getOrderHistoryService = async () => {
-    const orders = await prisma.order.findMany({
-        where: { status: 'paid' },
-        include: {
-            table: true,
-            items: { include: { menuItem: true } }
-        },
-        orderBy: { updatedAt: 'desc' }
-    });
-    return { orders };
+    const [orders, creditTransactions, debtSettlements] = await Promise.all([
+        prisma.order.findMany({
+            where: { status: 'paid' },
+            include: {
+                table: true,
+                items: { include: { menuItem: true } }
+            },
+            orderBy: { updatedAt: 'desc' }
+        }),
+        prisma.creditTransaction.findMany({
+            orderBy: { createdAt: 'desc' }
+        }),
+        prisma.debtSettlement.findMany({
+            orderBy: { createdAt: 'desc' }
+        })
+    ]);
+    return { orders, creditTransactions, debtSettlements };
 };
 
 export const addItemsToOrderService = async (orderId: string, items: { menuItemId: string, quantity: number }[]) => {
@@ -237,6 +202,12 @@ export const addItemsToOrderService = async (orderId: string, items: { menuItemI
         }
 
         const newTotal = await recalculateOrderTotal(orderId, tx);
+
+        try {
+            const { getIO } = await import('../socket.ts');
+            getIO().emit('order:updated', { orderId, totalAmount: newTotal });
+        } catch (e) { console.error("Socket error", e); }
+
         return { message: 'Items added to order', newTotal };
     });
 };

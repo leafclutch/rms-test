@@ -7,8 +7,8 @@ import menuRoutes from './routes/menu.router.ts';
 import paymentRoutes from './routes/payment.router.ts';
 import orderRoutes from './routes/order.router.ts';
 import adminRoutes from './routes/admin.router.ts';
-import inventoryRoutes from './routes/inventory.router.js'; 
-import reportsRoutes from './routes/reports.router.js'; 
+import inventoryRoutes from './routes/inventory.router.ts';
+import reportsRoutes from './routes/reports.router.ts';
 
 app.use(cors());
 app.use(express.json());
@@ -22,7 +22,7 @@ app.use('/tables', tableRoutes);
 app.use('/menu', menuRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/orders', orderRoutes);
-app.use('/admin/inventory', inventoryRoutes); 
+app.use('/admin/inventory', inventoryRoutes);
 app.use('/admin/reports', reportsRoutes);
 app.use('/admin', adminRoutes);
 

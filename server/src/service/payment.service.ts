@@ -96,6 +96,8 @@ export const processCashPayment = async ({ orderId, discount, cashAmount }: Paym
             data: {
                 status: OrderStatus.paid,
                 discountAmount: discountAmount,
+                discountValue: discount?.value || null,
+                discountType: discount?.type || null,
                 dueAmount: 0,
                 cashAmount: finalAmount,
                 paymentMethod: PaymentMethod.CASH,
@@ -139,6 +141,8 @@ export const processOnlinePayment = async ({ orderId, discount }: PaymentPayload
             data: {
                 status: OrderStatus.paid,
                 discountAmount: discountAmount,
+                discountValue: discount?.value || null,
+                discountType: discount?.type || null,
                 dueAmount: 0,
                 onlineAmount: finalAmount,
                 paymentMethod: PaymentMethod.ONLINE,
@@ -189,6 +193,8 @@ export const processMixedPayment = async ({ orderId, discount, cashAmount, onlin
             data: {
                 status: OrderStatus.paid,
                 discountAmount: discountAmount,
+                discountValue: discount?.value || null,
+                discountType: discount?.type || null,
                 dueAmount: 0,
                 cashAmount: cAmount,
                 onlineAmount: oAmount,
@@ -214,11 +220,11 @@ export const processMixedPayment = async ({ orderId, discount, cashAmount, onlin
     };
 };
 
-export const processCreditPayment = async ({ orderId, customerPhone }: PaymentPayload) => {
+export const processCreditPayment = async ({ orderId, customerPhone, discount }: PaymentPayload) => {
     if (!customerPhone) throw new AppError('Customer phone required for credit payment', 400);
 
     const order = await getOrder(orderId);
-    const finalAmount = Number(order.totalAmount);
+    const { finalAmount, discountAmount } = calculateFinalPayable(Number(order.totalAmount), discount);
 
     // Find Credit Account
     let customer = await prisma.customer.findUnique({ where: { phoneNumber: customerPhone } });
@@ -253,7 +259,11 @@ export const processCreditPayment = async ({ orderId, customerPhone }: PaymentPa
                 status: OrderStatus.paid,
                 paymentMethod: PaymentMethod.CREDIT,
                 customerId: customer!.id,
-                dueAmount: 0, // Order is financially closed; debt tracks in Customer ledger
+                discountAmount: discountAmount,
+                discountValue: discount?.value || null,
+                discountType: discount?.type || null,
+                dueAmount: 0,
+                creditAmount: finalAmount,
                 cashAmount: 0,
                 onlineAmount: 0
             }

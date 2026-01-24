@@ -1,3 +1,4 @@
+import type { Department } from '@prisma/client';
 import prisma from '../config/prisma.ts';
 import { AppError } from '../utils/appError.ts';
 
@@ -12,6 +13,7 @@ export const getPublicMenuService = async () => {
                     isAvailable: true,
                     isSpecial: true,
                     isVeg: true,
+                    department: true,
                 },
                 orderBy: {
                     name: 'asc',
@@ -37,14 +39,15 @@ export const createMenuItemService = async (data: {
     name: string;
     categoryId: string;
     price: number;
+    department: Department;
     isAvailable?: boolean;
     isSpecial?: boolean;
-    isVeg?: boolean;
+    isVeg?: boolean | null;
 }) => {
-    const { name, categoryId, price, isAvailable, isSpecial, isVeg } = data;
+    const { name, categoryId, price, department, isAvailable, isSpecial, isVeg } = data;
 
-    if (!name || !categoryId || price === undefined) {
-        throw new AppError('Name, categoryId, and price are required', 400);
+    if (!name || !categoryId || !department || price === undefined) {
+        throw new AppError('Name, categoryId, department, and price are required', 400);
     }
 
     // Check if category exists
@@ -60,11 +63,12 @@ export const createMenuItemService = async (data: {
         data: {
             name,
             categoryId,
-            price,
-            isAvailable: isAvailable ?? true,
-            isSpecial: isSpecial ?? false,
-            isVeg: isVeg ?? true,
-        },
+            price: Number(price),
+            department,
+            isAvailable: isAvailable !== undefined ? String(isAvailable) === 'true' : true,
+            isSpecial: isSpecial !== undefined ? String(isSpecial) === 'true' : false,
+            isVeg: isVeg === null ? null : (isVeg !== undefined ? (typeof isVeg === 'string' ? String(isVeg) === 'true' : Boolean(isVeg)) : true),
+        } as any,
         include: {
             category: true,
         },
@@ -82,10 +86,11 @@ export const updateMenuItemService = async (
     data: {
         name?: string;
         categoryId?: string;
+        department?: Department;
         price?: number;
         isAvailable?: boolean;
         isSpecial?: boolean;
-        isVeg?: boolean;
+        isVeg?: boolean | null;
     }
 ) => {
     if (!id) {
@@ -112,9 +117,18 @@ export const updateMenuItemService = async (
         }
     }
 
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+    if (data.department !== undefined) updateData.department = data.department;
+    if (data.price !== undefined) updateData.price = Number(data.price);
+    if (data.isAvailable !== undefined) updateData.isAvailable = typeof data.isAvailable === 'string' ? String(data.isAvailable) === 'true' : Boolean(data.isAvailable);
+    if (data.isSpecial !== undefined) updateData.isSpecial = typeof data.isSpecial === 'string' ? String(data.isSpecial) === 'true' : Boolean(data.isSpecial);
+    if (data.isVeg !== undefined) updateData.isVeg = data.isVeg === null ? null : (typeof data.isVeg === 'string' ? String(data.isVeg) === 'true' : Boolean(data.isVeg));
+
     const updatedItem = await prisma.menuItem.update({
         where: { id },
-        data,
+        data: updateData,
         include: {
             category: true,
         },
@@ -159,10 +173,10 @@ export const deleteMenuItemService = async (id: string) => {
 
     // If item has recipes, delete recipes first or prevent deletion
     if (existingItem._count.recipes > 0) {
-         // Optionally, we could delete recipes automatically here, but better to be safe
-         await prisma.itemRecipe.deleteMany({
-             where: { menuItemId: id }
-         });
+        // Optionally, we could delete recipes automatically here, but better to be safe
+        await prisma.itemRecipe.deleteMany({
+            where: { menuItemId: id }
+        });
     }
 
     await prisma.menuItem.delete({

@@ -40,10 +40,10 @@ export const payMixed = async (req: Request, res: Response, next: NextFunction) 
 
 export const payCredit = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { orderId, customerPhone } = req.body;
+        const { orderId, customerPhone, discount } = req.body;
         if (!orderId) throw new AppError('Order ID is required', 400);
 
-        const result = await paymentService.processCreditPayment({ orderId, customerPhone });
+        const result = await paymentService.processCreditPayment({ orderId, customerPhone, discount });
         res.status(200).json(result);
     } catch (error) {
         next(error);
