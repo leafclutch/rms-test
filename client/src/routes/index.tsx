@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AdminLayout } from '../layouts/AdminLayout';
 
-// Customer Pages
 import { OrderSuccess } from '../pages/customer/OrderSuccess';
 import AdminDashboardView from '../pages/admin/AdminDashboardView';
 import AdminOrdersView from '../pages/admin/AdminOrdersView';
@@ -17,25 +16,19 @@ import OrderTracking from '../pages/customer/OrderTracking';
 import AdminAddMenuView from '../pages/admin/AdminAddMenuView';
 import GenerateQr from '../pages/admin/GenerateQr';
 import CustomerDetails from '../pages/admin/CustomerDetails';
-import LandingPage from '../pages/LandingPage';
 import ReportsView from '../pages/admin/ReportsView';
 import AdminCreateOrderView from '../pages/admin/AdminCreateOrderView';
-
-// Admin Pages
 import OnlineEntry from '../pages/customer/OnlineEntry';
 
 export const router = createBrowserRouter([
-  // Landing Page - Redirect to /admin/login instead of rendering login directly
   {
     path: '/',
     element: <Navigate to="/admin/login" replace />
   },
-  // Online Entry
   {
     path: '/Online',
     element: <OnlineEntry />
   },
-  // Customer Routes
   {
     path: '/menu',
     element: <CustomerMenuView />
@@ -53,13 +46,11 @@ export const router = createBrowserRouter([
     element: <OrderTracking />
   },
 
-  // Admin Login (Public)
   {
     path: '/admin/login',
     element: <AdminLoginView />
   },
 
-  // Admin Routes (Protected)
   {
     path: '/admin',
     element: (
@@ -123,7 +114,6 @@ export const router = createBrowserRouter([
     ]
   },
 
-  // 404 - Catch all
   {
     path: '*',
     element: <Navigate to="/" replace />

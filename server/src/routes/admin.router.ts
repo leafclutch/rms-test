@@ -4,19 +4,19 @@ import * as creditController from '../controllers/credit.controller.ts';
 import { protect } from '../middleware/auth.middleware.ts';
 
 const router = express.Router();
-//order management
+
 router.get('/orders/active', protect, adminController.getActiveOrders);
 router.get('/orders/history', protect, adminController.getOrderHistory);
 router.patch('/orders/:orderId/serve', protect, adminController.serveOrder);
 router.patch('/orders/:orderId/preparing', protect, adminController.preparingOrder);
 router.get('/orders/:orderId/bill', protect, adminController.getBill);
 
-// Item management
+
 router.post('/orders/:orderId/items', protect, adminController.addItemsToOrder);
 router.patch('/orders/:orderId/items/:menuItemId/reduce', protect, adminController.reduceOrderItem);
 router.delete('/orders/:orderId/items/:menuItemId', protect, adminController.cancelOrderItem);
 
-// Credit Management
+
 router.post('/credit-accounts', protect, creditController.createAccount);
 router.get('/credit-accounts', protect, creditController.listAccounts);
 router.get('/credit-accounts/search', protect, creditController.searchAccounts);
