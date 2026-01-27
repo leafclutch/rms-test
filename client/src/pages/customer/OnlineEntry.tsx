@@ -56,7 +56,7 @@ const OnlineEntry: React.FC = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Nishan Dhakal"
+                placeholder="Full name "
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#16516f] transition-all"
                 required
               />
@@ -68,10 +68,10 @@ const OnlineEntry: React.FC = () => {
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-                type="tel"
+                type="number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="9800000000"
+                placeholder="Mobile number "
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#16516f] transition-all"
                 required
               />

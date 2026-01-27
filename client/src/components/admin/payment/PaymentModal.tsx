@@ -90,15 +90,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ order, onClose, onSu
       // Update order
       await updateOrder(order.id, {
         paymentMethod: activeTab.toUpperCase() as any, // Cast to any to avoid strict type issues if types mismatch slightly
-        paymentStatus: 'paid',
         status: 'paid', // Changed from 'completed' to 'paid' to match OrderStatus type
-        discount: discountValue > 0 ? {
-          type: discountType,
-          value: discountValue,
-          amount: discountAmount
-        } : undefined,
+        discountType: discountValue > 0 ? discountType.toUpperCase() as any : undefined,
+        discountValue: discountValue > 0 ? discountValue : undefined,
+        finalAmountAfterDiscount: finalAmount,
         finalAmount: finalAmount,
-        completedAt: new Date()
       });
 
       toast.success('Payment processed successfully!');

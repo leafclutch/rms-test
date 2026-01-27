@@ -17,7 +17,7 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
   const [department, setDepartment] = useState<string>("KITCHEN");
   const [isVeg, setIsVeg] = useState<boolean | null>(true);
   const [isSpecial, setIsSpecial] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  // const [imageFile, setImageFile] = useState<File | null>(null); // Removed
   const [isAvailable, setIsAvailable] = useState(true);
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,10 +28,10 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
+      // setImageFile(file); // Removed
       setPreview(URL.createObjectURL(file));
     } else {
-      setImageFile(null);
+      // setImageFile(null); // Removed
       setPreview(null);
     }
   };
@@ -61,7 +61,7 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
     setDepartment("KITCHEN");
     setIsVeg(true);
     setIsSpecial(false);
-    setImageFile(null);
+    // setImageFile(null);
     setPreview(null);
     setIsAvailable(true);
 

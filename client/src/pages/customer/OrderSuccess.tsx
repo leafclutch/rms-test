@@ -25,7 +25,7 @@ export const OrderSuccess: React.FC = () => {
         }
     }, [orderId, getOrderById]);
 
-    const { cart, addToCart } = useCustomerCartStore();
+    const { addToCart } = useCustomerCartStore();
 
     const handleAddMoreItems = () => {
         // Add previous order items to cart
@@ -41,6 +41,7 @@ export const OrderSuccess: React.FC = () => {
                     isVeg: item.isVeg ?? true,
                     isAvailable: item.isAvailable ?? true,
                     isSpecial: item.isSpecial ?? false, // Add missing property to satisfy MenuItem
+                    department: 'KITCHEN', // Default
                 }, item.quantity);
             });
         }

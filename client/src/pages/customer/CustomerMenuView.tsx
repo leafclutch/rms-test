@@ -7,17 +7,7 @@ import { useCustomerCartStore } from "../../store/useCustomerCartStore";
 
 import type { MenuItem } from "../../types/menu";
 
-const TOP_CATEGORIES = [
-  { name: "All", icon: "🍽️" },
-  { name: "Tea", icon: "🍵" },
-  { name: "Drinks", icon: "🥤" },
-  { name: "Snacks", icon: "🍜" },
-  { name: "Chatpatey Items", icon: "🌶️" },
-  { name: "Rice", icon: "🍛" },
-  { name: "Momo", icon: "🥟" },
-];
 
-// The correct type for image can be inferred, fallback to string
 function getImageProps(image: any, name: string) {
   if (!image) return { type: "none" };
   if (typeof image === "string") {
@@ -32,22 +22,22 @@ function getImageProps(image: any, name: string) {
 const CustomerMenuView: React.FC = () => {
   const { tableId } = useParams<{ tableId?: string }>();
   const navigate = useNavigate();
-  // Extract customer details from query params
+
   const [searchParams] = useSearchParams();
   const customerName = searchParams.get('name');
   const customerPhone = searchParams.get('phone');
 
-  // Import categories and raw items from menu store
+
   const { fetchAll, categories, items } = useMenuStore();
 
-  // Import order store
+
   const {
     orders,
     createOrder,
-    // updateExistingOrder
+
   } = useCustomerOrderStore();
 
-  // Use custom cart store (Zustand)
+
   const {
     cart,
     addToCart,
@@ -60,25 +50,24 @@ const CustomerMenuView: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [selectedTopCategory, setSelectedTopCategory] = useState<string | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [showOrderSuccess, setShowOrderSuccess] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<any>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
-  // On mount, fetch menu items
+
   useEffect(() => {
     fetchAll().catch(err => console.error("Failed to fetch menu:", err));
   }, []);
 
-  // Find active order for this table (if any)
+
   const activeOrder = orders.find(
     (o) =>
       o.tableCode?.toLowerCase() === tableId?.toLowerCase() &&
       !["paid", "cancelled"].includes(o.status)
   );
 
-  // Place order function - submit cart to API (via customStore)
+
   const placeOrder = async () => {
     if (cart.length === 0) {
       alert("Your cart is empty. Please add items to place an order.");
@@ -88,16 +77,15 @@ const CustomerMenuView: React.FC = () => {
     setIsPlacingOrder(true);
 
     try {
-      // Create order payload - pass full cart items (MenuItem & { quantity })
       const orderPayload = {
-        items: cart, // cart is already (MenuItem & { quantity })[]
+        items: cart,
         customerType: (tableId ? "DINE_IN" : "ONLINE") as "DINE_IN" | "ONLINE",
         tableCode: tableId ? tableId.toUpperCase() : undefined,
         customerName: customerName || undefined,
         mobileNumber: customerPhone || undefined,
       };
 
-      // Call createOrder from store
+
       const orderResult = await createOrder(orderPayload);
 
       if (orderResult) {
@@ -120,39 +108,33 @@ const CustomerMenuView: React.FC = () => {
     }
   };
 
-  // Filtered menu items based on top category, search, and admin's category
-  const filteredItems = items.filter((item) => {
-    // Top visual category filter (optional visual for users)
-    const matchesTop =
-      !selectedTopCategory || selectedTopCategory === "All"
-        ? true
-        : item.category === selectedTopCategory;
 
-    // Primary admin category filter
+  const filteredItems = items.filter((item) => {
+
     const matchesCat =
       selectedCategory === "All" ? true : item.category === selectedCategory;
 
-    // Search filter
+
     const matchesSearch = item.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
 
-    return matchesTop && matchesCat && matchesSearch;
+    return matchesCat && matchesSearch;
   });
 
 
-  // Cart totals (from custom store selectors)
+
   const cartTotal = getTotalAmount();
   const cartItemCount = getTotalItems();
 
-  // Notification State
+
   const [notification, setNotification] = useState<{ message: string; show: boolean; }>({ message: "", show: false });
 
   const handleAddToCart = (item: MenuItem) => {
     addToCart(item);
     setNotification({ message: `${item.name}  added `, show: true });
 
-    // Clear any existing timeout if needed (optional optimization)
+
     setTimeout(() => {
       setNotification((prev) => ({ ...prev, show: false }));
     }, 3000);
@@ -175,7 +157,7 @@ const CustomerMenuView: React.FC = () => {
             <div className="text-3xl lg:text-4xl">🍽️</div>
             <div>
               <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                Leafclutch Technologies
+                Aaradhya Restaurant
               </h1>
               {tableId ? (
                 <div className="flex items-center gap-1 text-xs lg:text-sm">
@@ -186,7 +168,7 @@ const CustomerMenuView: React.FC = () => {
                   </span>
                 </div>
               ) : (
-                <p className="text-xs lg:text-sm text-gray-600">⭐ 77°C</p>
+                <p className="text-xs lg:text-sm text-gray-600">Online Order</p>
               )}
             </div>
           </div>
@@ -205,32 +187,56 @@ const CustomerMenuView: React.FC = () => {
           </div>
         </div>
 
-
-        {/* Top Category Images */}
+        {/* Category Filter - Directly below header */}
         <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex gap-4 overflow-x-auto scrollbar-hide">
-            {TOP_CATEGORIES.map((cat) => (
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4">
+            <div className="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+              {/* All Category */}
               <button
-                key={cat.name}
-                onClick={() => setSelectedTopCategory(cat.name)}
-                className={`flex flex-col items-center gap-1 min-w-[70px] p-2 rounded-lg transition-all ${selectedTopCategory === cat.name
-                  ? "bg-[#16516f] text-white"
-                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                  }`}
+                onClick={() => setSelectedCategory("All")}
+                className={`flex flex-col items-center justify-center min-w-[80px] p-3 rounded-xl transition-all ${
+                  selectedCategory === "All"
+                    ? "bg-[#16516f]/10 border-2 border-[#16516f]"
+                    : "bg-gray-100 border-2 border-transparent hover:bg-gray-200"
+                }`}
               >
-                <span className="text-2xl">{cat.icon}</span>
-                <span className="text-xs font-medium text-center">
-                  {cat.name}
+                <div className="text-3xl mb-1">🍽️</div>
+                <span className={`text-sm font-medium whitespace-nowrap ${
+                  selectedCategory === "All" ? "text-[#16516f]" : "text-gray-700"
+                }`}>
+                  All
                 </span>
               </button>
-            ))}
+
+              {/* Dynamic Categories with Same Emoji */}
+              {categories
+                .filter((cat) => !!cat && cat.categoryName !== "All")
+                .map((cat) => (
+                  <button
+                    key={cat.categoryId}
+                    onClick={() => setSelectedCategory(cat.categoryName)}
+                    className={`flex flex-col items-center justify-center min-w-[80px] p-3 rounded-xl transition-all ${
+                      selectedCategory === cat.categoryName
+                        ? "bg-[#16516f]/10 border-2 border-[#16516f]"
+                        : "bg-gray-100 border-2 border-transparent hover:bg-gray-200"
+                    }`}
+                  >
+                    <div className="text-3xl mb-1">🍽️</div>
+                    <span className={`text-sm font-medium whitespace-nowrap ${
+                      selectedCategory === cat.categoryName ? "text-[#16516f]" : "text-gray-700"
+                    }`}>
+                      {cat.categoryName}
+                    </span>
+                  </button>
+                ))}
+            </div>
           </div>
         </div>
 
-        {/* Search + Category Filter */}
+        {/* Search Bar */}
         <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex flex-col lg:flex-row gap-4">
-            <div className="relative flex-1">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
@@ -239,33 +245,6 @@ const CustomerMenuView: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
               />
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-              <button
-                key="All"
-                onClick={() => setSelectedCategory("All")}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${selectedCategory === "All"
-                  ? "bg-[#16516f] text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                All
-              </button>
-
-              {categories
-                .filter((cat) => !!cat && cat.categoryName !== "All")
-                .map((cat) => (
-                  <button
-                    key={cat.categoryId}
-                    onClick={() => setSelectedCategory(cat.categoryName)}
-                    className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${selectedCategory === cat.categoryName
-                      ? "bg-[#16516f] text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                  >
-                    {cat.categoryName}
-                  </button>
-                ))}
             </div>
           </div>
         </div>

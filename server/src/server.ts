@@ -1,6 +1,5 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import app from "./app.js";
-// Restart Trigger 3
 import { connectToDB } from "./config/prisma.ts";
 import { createServer } from 'http';
 import { initializeSocket } from './socket.ts';

@@ -1,3 +1,4 @@
+// ReportsView.tsx
 import React, { useState, useEffect } from 'react';
 import {
   Download,
@@ -9,12 +10,16 @@ import {
   Banknote,
   Smartphone,
   Wallet,
+  X,
+  ChevronRight,
+  Utensils
 } from 'lucide-react';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
-import { useOrderStore } from '../../store/useOrderStore';
+import { getSalesReport } from '../../api/reports';
+import toast from 'react-hot-toast';
 
-// Keep existing DEPARTMENTS as requested (Static for now as we don't have category data in orders yet)
+// Static for mapping icons/colors
 const DEPARTMENTS = [
   { id: 'KITCHEN', name: 'Kitchen', icon: ChefHat, color: 'orange' },
   { id: 'DRINK', name: 'Drink', icon: Coffee, color: 'blue' },
@@ -22,110 +27,106 @@ const DEPARTMENTS = [
   { id: 'HUKKA', name: 'Hookah', icon: Cigarette, color: 'purple' },
 ];
 
+interface DepartmentDetailsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  departmentName: string;
+  items: { name: string; quantity: number; revenue: number }[];
+  totalRevenue: number;
+}
+
+const DepartmentDetailsModal: React.FC<DepartmentDetailsModalProps> = ({ isOpen, onClose, departmentName, items, totalRevenue }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col animate-in fade-in zoom-in duration-200">
+        <div className="flex justify-between items-center p-4 border-b">
+          <div>
+            <h3 className="font-bold text-lg text-gray-800">{departmentName} Details</h3>
+            <p className="text-sm text-gray-500">Revenue Breakdown</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="overflow-y-auto flex-1 p-4">
+          {items.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Utensils className="w-10 h-10 mx-auto mb-2 opacity-20" />
+              <p>No items sold in this period.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {items.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white p-2 rounded-md shadow-sm text-xs font-bold text-gray-500 w-8 h-8 flex items-center justify-center">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">{item.name}</p>
+                      <p className="text-xs text-gray-500">{item.quantity} units sold</p>
+                    </div>
+                  </div>
+                  <p className="font-bold text-gray-900">Rs. {Math.round(item.revenue).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 bg-gray-50 border-t rounded-b-xl flex justify-between items-center">
+            <span className="font-medium text-gray-600">Total Department Revenue</span>
+            <span className="font-bold text-lg text-gray-900">Rs. {Math.round(totalRevenue).toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const ReportsView: React.FC = () => {
-  const {
-    fetchHistory,
-    historyOrders,
-    historyDebtSettlements,
-    isLoading
-  } = useOrderStore();
-
   const [filterDate, setFilterDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [loading, setLoading] = useState(false);
+  const [reportData, setReportData] = useState<any>(null);
+  const [selectedDept, setSelectedDept] = useState<string | null>(null);
 
+  const fetchReport = async () => {
+    setLoading(true);
+    try {
+      const data = await getSalesReport(filterDate, filterDate); // Daily report
+      setReportData(data);
+    } catch (error) {
+      console.error("Failed to fetch report", error);
+      toast.error("Failed to load sales report");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+    fetchReport();
+  }, [filterDate]);
 
-  const ordersForSummary = (historyOrders || []).filter(order => {
-    const dateObj = new Date(order.updatedAt || order.createdAt || Date.now());
-    const orderDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-    return !filterDate || orderDate === filterDate;
-  });
-
-  const salesSummary = ordersForSummary.reduce((acc, order) => {
-    let cash = Number(order.cashAmount || 0);
-    let online = Number(order.onlineAmount || 0);
-    let credit = Number(order.creditAmount || 0);
-
-    if (credit > 0 && !order.customerId) {
-      cash += credit;
-      credit = 0;
-    }
-
-    acc.cash += cash;
-    acc.online += online;
-    acc.credit += credit;
-
-    if (order.paymentMethod !== 'CREDIT' || !order.customerId) {
-      acc.total += (cash + online);
-    }
-
-    acc.count += 1;
-    return acc;
-  }, { total: 0, cash: 0, online: 0, credit: 0, debtSettle: 0, count: 0 });
-
-  (historyDebtSettlements || []).forEach(settlement => {
-    try {
-      const dateObj = new Date(settlement.createdAt);
-      if (isNaN(dateObj.getTime())) return;
-      const settleDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-      if (settleDate === filterDate) {
-        salesSummary.debtSettle += Number(settlement.amount);
-      }
-    } catch (e) { console.error("Filter settle date error", e); }
-  });
-
-  // Calculate Real Department Sales
-  const deptStats = ordersForSummary.reduce((acc: any, order) => {
-    const orderItems = order.items || [];
-    const orderTotal = Number(order.totalAmount || 0);
-
-    let orderCash = Number(order.cashAmount || 0);
-    let orderOnline = Number(order.onlineAmount || 0);
-    let orderCredit = Number(order.creditAmount || 0);
-
-    // If generic walk-in credit, it's actually cash (logic from summary)
-    if (orderCredit > 0 && !order.customerId) {
-      orderCash += orderCredit;
-      orderCredit = 0;
-    }
-
-    orderItems.forEach((item: any) => {
-      const dept = item.menuItem?.department || 'KITCHEN';
-      if (!acc[dept]) {
-        acc[dept] = { revenue: 0, items: 0, cash: 0, online: 0, credit: 0 };
-      }
-
-      const itemPrice = Number(item.priceSnapshot || 0);
-      const itemTotal = itemPrice * item.quantity;
-
-      acc[dept].revenue += itemTotal;
-      acc[dept].items += item.quantity;
-
-      // Proportional Revenue split logic
-      if (orderTotal > 0) {
-        const ratio = itemTotal / orderTotal;
-        acc[dept].cash += orderCash * ratio;
-        acc[dept].online += orderOnline * ratio;
-        acc[dept].credit += orderCredit * ratio;
-      }
-    });
-
-    return acc;
-  }, {});
+  const salesSummary = reportData?.summary || { totalRevenue: 0, totalOrders: 0, totalDiscount: 0, netRevenue: 0, totalDebtSettled: 0 };
+  const byPaymentMethod = reportData?.byPaymentMethod || { CASH: { amount: 0 }, ONLINE: { amount: 0 }, CREDIT: { amount: 0 } };
+  const deptStats = reportData?.byDepartment || {};
 
   const getColorClasses = (color: string) => {
     const colors: any = {
-      orange: { bg: 'bg-orange-100', text: 'text-orange-600', border: 'border-orange-500' },
-      blue: { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-500' },
-      amber: { bg: 'bg-amber-100', text: 'text-amber-600', border: 'border-amber-500' },
-      purple: { bg: 'bg-purple-100', text: 'text-purple-600', border: 'border-purple-500' },
+      orange: { bg: 'bg-orange-100', text: 'text-orange-600', border: 'border-orange-500', ring: 'focus:ring-orange-500' },
+      blue: { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-500', ring: 'focus:ring-blue-500' },
+      amber: { bg: 'bg-amber-100', text: 'text-amber-600', border: 'border-amber-500', ring: 'focus:ring-amber-500' },
+      purple: { bg: 'bg-purple-100', text: 'text-purple-600', border: 'border-purple-500', ring: 'focus:ring-purple-500' },
     };
     return colors[color] || colors.orange;
   };
 
   const handleExport = () => {
+    if (!reportData) return;
+
     const headers = [
       'Department',
       'TotalItems',
@@ -154,12 +155,12 @@ const ReportsView: React.FC = () => {
     // Add Overall Summary
     const summaryRow = [
       'TOTAL SALES',
-      ordersForSummary.reduce((acc, o) => acc + (o.items?.reduce((a, i) => a + i.quantity, 0) || 0), 0),
-      Math.round(salesSummary.total + salesSummary.credit),
-      Math.round(salesSummary.cash),
-      Math.round(salesSummary.online),
-      Math.round(salesSummary.credit),
-      Math.round(salesSummary.total)
+      salesSummary.totalOrders, // Using total orders count here effectively
+      Math.round(salesSummary.totalRevenue),
+      Math.round(byPaymentMethod.CASH?.amount || 0),
+      Math.round(byPaymentMethod.ONLINE?.amount || 0),
+      Math.round(byPaymentMethod.CREDIT?.amount || 0),
+      Math.round(salesSummary.netRevenue)
     ].join(',');
 
     const csvContent = [headers.join(','), ...rows, '', summaryRow].join('\n');
@@ -171,6 +172,9 @@ const ReportsView: React.FC = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const selectedDeptData = selectedDept ? deptStats[selectedDept] : null;
+  const selectedDeptName = DEPARTMENTS.find(d => d.id === selectedDept)?.name || '';
 
   return (
     <div className="h-screen bg-gray-50 overflow-hidden flex flex-col">
@@ -204,7 +208,7 @@ const ReportsView: React.FC = () => {
       </header>
 
       <main className="p-6 overflow-y-auto flex-1">
-        {isLoading ? (
+        {loading ? (
           <div className="flex justify-center items-center h-full">
             <div className="h-10 w-10 border-b-2 border-orange-600 rounded-full animate-spin" />
           </div>
@@ -216,8 +220,8 @@ const ReportsView: React.FC = () => {
                   <p className="text-sm text-gray-600 font-medium">Total Revenue (Paid)</p>
                   <Wallet className="w-5 h-5 text-orange-500" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900">Rs. {salesSummary.total.toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">{salesSummary.count} orders</p>
+                <p className="text-2xl font-bold text-gray-900">Rs. {salesSummary.netRevenue.toLocaleString()}</p>
+                <p className="text-xs text-gray-500 mt-1">{salesSummary.totalOrders} orders</p>
               </Card>
 
               <Card className="border-l-4 border-green-500 shadow-sm">
@@ -225,9 +229,9 @@ const ReportsView: React.FC = () => {
                   <p className="text-sm text-gray-600 font-medium">Cash Sales</p>
                   <Banknote className="w-5 h-5 text-green-500" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900">Rs. {salesSummary.cash.toLocaleString()}</p>
-                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                  <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${salesSummary.total ? (salesSummary.cash / salesSummary.total) * 100 : 0}%` }}></div>
+                <p className="text-2xl font-bold text-gray-900">Rs. {(byPaymentMethod.CASH?.amount || 0).toLocaleString()}</p>
+                 <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                  <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${salesSummary.netRevenue ? ((byPaymentMethod.CASH?.amount || 0) / salesSummary.netRevenue) * 100 : 0}%` }}></div>
                 </div>
               </Card>
 
@@ -236,9 +240,9 @@ const ReportsView: React.FC = () => {
                   <p className="text-sm text-gray-600 font-medium">Online Sales</p>
                   <Smartphone className="w-5 h-5 text-blue-500" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900">Rs. {salesSummary.online.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-gray-900">Rs. {(byPaymentMethod.ONLINE?.amount || 0).toLocaleString()}</p>
                 <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${salesSummary.total ? (salesSummary.online / salesSummary.total) * 100 : 0}%` }}></div>
+                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${salesSummary.netRevenue ? ((byPaymentMethod.ONLINE?.amount || 0) / salesSummary.netRevenue) * 100 : 0}%` }}></div>
                 </div>
               </Card>
 
@@ -247,10 +251,10 @@ const ReportsView: React.FC = () => {
                   <p className="text-sm text-gray-600 font-medium">Credit</p>
                   <CreditCard className="w-5 h-5 text-red-500" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900">Rs. {salesSummary.credit.toLocaleString()}</p>
-                {salesSummary.debtSettle > 0 && (
+                <p className="text-2xl font-bold text-gray-900">Rs. {(byPaymentMethod.CREDIT?.amount || 0).toLocaleString()}</p>
+                {salesSummary.totalDebtSettled > 0 && (
                   <p className="text-xs text-emerald-600 mt-1 font-semibold">
-                    + Rs. {salesSummary.debtSettle.toLocaleString()} collected
+                    + Rs. {salesSummary.totalDebtSettled.toLocaleString()} collected
                   </p>
                 )}
               </Card>
@@ -259,6 +263,7 @@ const ReportsView: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Department Sales</h2>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Click on a card for details</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -268,12 +273,17 @@ const ReportsView: React.FC = () => {
                   const stats = deptStats[dept.id] || { revenue: 0, items: 0 };
 
                   return (
-                    <Card key={dept.id} className={`border-l-4 ${c.border} shadow-sm overflow-hidden relative`}>
+                    <Card 
+                        key={dept.id} 
+                        className={`border-l-4 ${c.border} shadow-sm overflow-hidden relative cursor-pointer hover:shadow-md transition-shadow`}
+                        onClick={() => setSelectedDept(dept.id)}
+                    >
                       <div className="flex items-center gap-3 mb-3 relative z-10">
                         <div className={`${c.bg} p-2 rounded-lg`}>
                           <Icon className={`${c.text} w-5 h-5`} />
                         </div>
                         <h3 className="font-bold text-gray-700">{dept.name}</h3>
+                        <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
                       </div>
                       <div className="space-y-1 relative z-10">
                         <p className="text-sm text-gray-500">Department Revenue</p>
@@ -298,6 +308,14 @@ const ReportsView: React.FC = () => {
           </div>
         )}
       </main>
+
+      <DepartmentDetailsModal 
+        isOpen={!!selectedDept}
+        onClose={() => setSelectedDept(null)}
+        departmentName={selectedDeptName}
+        items={selectedDeptData?.topItems || []}
+        totalRevenue={selectedDeptData?.revenue || 0}
+      />
     </div >
   );
 };

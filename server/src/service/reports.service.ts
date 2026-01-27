@@ -27,7 +27,7 @@ const parseDateRange = (start?: string, end?: string): DateRange => {
 export const getSalesReportService = async (startStr?: string, endStr?: string) => {
     const { startDate, endDate } = parseDateRange(startStr, endStr);
 
-    // Fetch paid orders in date range
+    // Fetch paid orders in date range with items
     const orders = await prisma.order.findMany({
         where: {
             createdAt: {
@@ -35,6 +35,13 @@ export const getSalesReportService = async (startStr?: string, endStr?: string) 
                 lte: endDate
             },
             status: OrderStatus.paid
+        },
+        include: {
+            items: {
+                include: {
+                    menuItem: true
+                }
+            }
         }
     });
 
@@ -50,36 +57,111 @@ export const getSalesReportService = async (startStr?: string, endStr?: string) 
         CREDIT: { count: 0, amount: 0 }
     };
 
+    const byDepartment: Record<string, { 
+        revenue: number; 
+        items: number; 
+        cash: number; 
+        online: number; 
+        credit: number;
+        itemBreakdown: Record<string, { quantity: number; revenue: number }> 
+    }> = {
+        KITCHEN: { revenue: 0, items: 0, cash: 0, online: 0, credit: 0, itemBreakdown: {} },
+        DRINK: { revenue: 0, items: 0, cash: 0, online: 0, credit: 0, itemBreakdown: {} },
+        BAKERY: { revenue: 0, items: 0, cash: 0, online: 0, credit: 0, itemBreakdown: {} },
+        HUKKA: { revenue: 0, items: 0, cash: 0, online: 0, credit: 0, itemBreakdown: {} }
+    };
+
     for (const order of orders) {
         const amount = Number(order.totalAmount);
         const discount = Number(order.discountAmount);
-        const final = Number(order.totalAmount) - discount; // Logic check: is stored totalAmount before or after discount? 
         const net = amount - discount;
 
         totalRevenue += amount;
         totalDiscount += discount;
         netRevenue += net;
 
-        // Breakdown
+        // Payment Method Breakdown
         const method = order.paymentMethod || 'UNKNOWN';
         if (byPaymentMethod[method]) {
             byPaymentMethod[method].count++;
             byPaymentMethod[method].amount += net;
         } else {
-             // Handle unexpected methods if any
              byPaymentMethod[method] = { count: 1, amount: net };
         }
+
+        // Department Breakdown Logic
+        let orderCash = Number(order.cashAmount || 0);
+        let orderOnline = Number(order.onlineAmount || 0);
+        let orderCredit = Number(order.creditAmount || 0);
+
+        const orderTotalForRatio = amount > 0 ? amount : 1; 
+
+        for(const item of order.items) {
+           const dept = item.menuItem?.department || 'KITCHEN';
+           
+           if (!byDepartment[dept]) {
+               byDepartment[dept] = { revenue: 0, items: 0, cash: 0, online: 0, credit: 0, itemBreakdown: {} };
+           }
+
+           const itemPrice = Number(item.priceSnapshot);
+           const itemTotal = itemPrice * item.quantity;
+           const itemName = item.menuItem?.name || 'Unknown Item';
+           
+           byDepartment[dept].revenue += itemTotal;
+           byDepartment[dept].items += item.quantity;
+
+           // Item Breakdown
+           if (!byDepartment[dept].itemBreakdown[itemName]) {
+               byDepartment[dept].itemBreakdown[itemName] = { quantity: 0, revenue: 0 };
+           }
+           byDepartment[dept].itemBreakdown[itemName].quantity += item.quantity;
+           byDepartment[dept].itemBreakdown[itemName].revenue += itemTotal;
+
+           // Proportional Revenue
+           const itemRatio = itemTotal / orderTotalForRatio;
+           byDepartment[dept].cash += orderCash * itemRatio;
+           byDepartment[dept].online += orderOnline * itemRatio;
+           byDepartment[dept].credit += orderCredit * itemRatio;
+        }
+    }
+
+    // Query for debt settlements in the same period
+    const settlements = await prisma.debtSettlement.findMany({
+        where: {
+            createdAt: {
+                gte: startDate,
+                lte: endDate
+            }
+        }
+    });
+
+    const totalDebtSettled = settlements.reduce((sum, s) => sum + Number(s.amount), 0);
+
+    // Format final response to include sorted arrays for items
+    const formattedByDepartment: any = {};
+    for (const [dept, stats] of Object.entries(byDepartment)) {
+        const sortedItems = Object.entries(stats.itemBreakdown)
+            .map(([name, data]) => ({ name, ...data }))
+            .sort((a, b) => b.revenue - a.revenue); // Sort by revenue desc
+            
+        formattedByDepartment[dept] = {
+            ...stats,
+            topItems: sortedItems
+        };
+        delete formattedByDepartment[dept].itemBreakdown; // Clean up intermediate object
     }
 
     return {
         period: { startDate, endDate },
         summary: {
-            totalRevenue, // Gross
+            totalRevenue, // Gross Sales (Paid)
             totalOrders: orders.length,
             totalDiscount,
-            netRevenue
+            netRevenue,
+            totalDebtSettled
         },
-        byPaymentMethod
+        byPaymentMethod,
+        byDepartment: formattedByDepartment
     };
 };
 

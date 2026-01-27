@@ -22,16 +22,40 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
     const [isSaving, setIsSaving] = useState(false);
 
     // Credit payment states
-    const [customerPhone, setCustomerPhone] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [customerFound, setCustomerFound] = useState<boolean | null>(null);
     const [foundCustomer, setFoundCustomer] = useState<any>(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newCustomerName, setNewCustomerName] = useState('');
+    const [newCustomerPhone, setNewCustomerPhone] = useState('');
 
     // Mixed Payment State
     const [mixedCash, setMixedCash] = useState<number>(0);
     const [mixedOnline, setMixedOnline] = useState<number>(0);
+
+    // Debounced Search Effect
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (searchQuery.length >= 2 && !customerFound) {
+                setIsSearching(true);
+                try {
+                    const response = await searchCustomers(searchQuery);
+                    setSearchResults(response.data || []);
+                } catch (error) {
+                    console.error("Search failed", error);
+                    setSearchResults([]);
+                } finally {
+                    setIsSearching(false);
+                }
+            } else {
+                setSearchResults([]);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery, customerFound]);
 
     useEffect(() => {
         if (order) {
@@ -40,31 +64,16 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
             setPaymentMethod(order.paymentMethod ?? 'CASH');
             setDiscountType(order.discountType ?? 'PERCENT');
             setDiscountValue(Number(order.discountValue ?? 0));
-            if (order.customerPhone) setCustomerPhone(order.customerPhone);
+            if (order.customerPhone) setSearchQuery(order.customerPhone);
         }
     }, [order]);
 
-    useEffect(() => {
-        if (!order) return;
-        const baseAmount = Number(order.totalAmount ?? order.finalAmount ?? 0);
-        let calculated = baseAmount;
-        const value = typeof discountValue === 'number' ? discountValue : 0;
-        if (value > 0) {
-            if (discountType === 'PERCENT') calculated = baseAmount - (baseAmount * value) / 100;
-            else calculated = baseAmount - value;
-        }
-        setFinalAmount(Math.max(0, calculated));
-    }, [discountValue, discountType, order]);
+    // ... useEffect for discount calc ...
 
-    // Reset mixed payment entries when switching to Mixed
-    useEffect(() => {
-        if (paymentMethod === 'MIXED') {
-            setMixedCash(0);
-            setMixedOnline(0);
-        }
-    }, [paymentMethod]);
+    // ... useEffect for mixed payment ...
 
     const handleMixedChange = (type: 'cash' | 'online', value: string) => {
+        // ... handled in original code ...
         const val = parseFloat(value) || 0;
         if (type === 'cash') {
             setMixedCash(val);
@@ -83,36 +92,34 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
     const isPaid = order?.status === 'paid';
     const canModify = !isCancelled && !isPaid && !isServed;
 
+    // Manual search button fallback
     const handleSearchCustomer = async () => {
-        if (!customerPhone || customerPhone.length < 10) {
-            toast.error('Enter a valid phone number');
-            return;
-        }
+        // Debounce handles mostly, this is for immediate trigger
+        if (!searchQuery || searchQuery.length < 2) return;
         setIsSearching(true);
-        setCustomerFound(null);
         try {
-            const response = await searchCustomers(customerPhone);
-            if (response.data?.length > 0) {
-                setFoundCustomer(response.data[0]);
-                setCustomerFound(true);
-                toast.success('Customer found');
-            } else {
-                setCustomerFound(false);
-            }
-        } catch (error) {
-            setCustomerFound(false);
+            const response = await searchCustomers(searchQuery);
+            setSearchResults(response.data || []);
         } finally {
             setIsSearching(false);
         }
     };
 
     const handleCreateAccount = async () => {
-        if (!newCustomerName || !customerPhone) return toast.error('Name/Phone required');
+        if (!newCustomerName || !newCustomerPhone) return toast.error('Name & Phone required');
+        
+        // Strict Nepal Phone Validation: 10 digits, starts with 9
+        const phoneRegex = /^9\d{9}$/;
+        if (!phoneRegex.test(newCustomerPhone)) {
+             return toast.error('Invalid Phone Number. Must be 10 digits and start with 9.');
+        }
+
         try {
-            const response = await addCustomer(newCustomerName, customerPhone);
-            setFoundCustomer(response.data || response); // fallback depending on what addCustomer returns
+            const response = await addCustomer(newCustomerName, newCustomerPhone);
+            setFoundCustomer(response.data || response); 
             setCustomerFound(true);
             setShowCreateForm(false);
+            setSearchQuery(''); // clear search to avoid confusion or keep it?
             toast.success('Account created');
         } catch (error: any) {
             toast.error(error?.response?.data?.message || 'Failed to create account');
@@ -131,7 +138,7 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
                 discount: val > 0 ? { type: discountType, value: val } : undefined,
                 cashAmount: paymentMethod === 'CASH' || paymentMethod === 'MIXED' ? finalAmount : undefined,
                 onlineAmount: paymentMethod === 'ONLINE' || paymentMethod === 'MIXED' ? finalAmount : undefined,
-                customerPhone: paymentMethod === 'CREDIT' ? customerPhone : undefined,
+                customerPhone: paymentMethod === 'CREDIT' ? foundCustomer?.phoneNumber : undefined,
             };
 
             if (paymentMethod === 'CASH') await payCash(payload);
@@ -165,8 +172,6 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
     };
 
 
-
-    // ... existing code ...
 
     const handlePrint = async () => {
         if (!order) return;
@@ -575,37 +580,119 @@ const ViewOrderDetailsModal = ({ isOpen, order, onClose }: ViewOrderDetailsModal
 
                             {/* Credit Customer Search */}
                             {paymentMethod === 'CREDIT' && (
-                                <div className="p-4 border rounded-xl bg-white shadow-sm space-y-3">
+                                <div className="p-4 border rounded-xl bg-white shadow-sm space-y-3 relative">
                                     <div className="flex gap-2">
-                                        <input
-                                            type="tel"
-                                            value={customerPhone}
-                                            onChange={(e) => setCustomerPhone(e.target.value)}
-                                            placeholder="Enter Customer Phone"
-                                            className="flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
-                                            maxLength={10}
-                                        />
+                                        <div className="flex-1 relative">
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => {
+                                                    setSearchQuery(e.target.value);
+                                                    setCustomerFound(null); // Reset found state on type
+                                                    setFoundCustomer(null);
+                                                }}
+                                                placeholder="Search Name or Phone "
+                                                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                                            />
+                                            {/* Search Results Dropdown - Only show if there are actual results */}
+                                            {searchQuery.length >= 2 && !customerFound && searchResults.length > 0 && (
+                                                <div className="absolute top-full left-0 right-0 z-10 bg-white border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                                                    {searchResults.map((customer: any) => (
+                                                        <div 
+                                                            key={customer.id}
+                                                            onClick={() => {
+                                                                setFoundCustomer(customer);
+                                                                setCustomerFound(true);
+                                                                setSearchQuery('');
+                                                            }}
+                                                            className="p-2 hover:bg-orange-50 cursor-pointer border-b last:border-0"
+                                                        >
+                                                            <p className="text-sm font-bold text-gray-800">{customer.fullName || customer.name}</p>
+                                                            <p className="text-xs text-gray-500">{customer.phoneNumber || customer.phone}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                         <button onClick={handleSearchCustomer} disabled={isSearching} className="bg-gray-900 text-white px-3 rounded-lg hover:bg-gray-800 transition-colors">
                                             <Search className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    {customerFound === true && (
-                                        <div className="flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 p-2 rounded-lg border border-green-100">
-                                            <CheckCircle className="w-4 h-4" /> {foundCustomer.fullName || foundCustomer.name}
+
+                                    {/* Selected Customer Display */}
+                                    {customerFound === true && foundCustomer && (
+                                        <div className="flex items-center justify-between text-sm font-medium text-green-700 bg-green-50 p-2 rounded-lg border border-green-100">
+                                            <div className="flex items-center gap-2">
+                                                <CheckCircle className="w-4 h-4" /> 
+                                                <span>{foundCustomer.fullName || foundCustomer.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-green-600 bg-white px-2 py-0.5 rounded border border-green-200">
+                                                    {foundCustomer.phoneNumber || foundCustomer.phone}
+                                                </span>
+                                                <button onClick={() => { setCustomerFound(false); setFoundCustomer(null); }} className="p-1 hover:bg-green-200 rounded text-green-800">
+                                                    <XCircle className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
-                                    {customerFound === false && !showCreateForm && (
-                                        <button onClick={() => setShowCreateForm(true)} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1">
-                                            <UserPlus className="w-3 h-3" /> Add New Customer
-                                        </button>
+
+                                    {/* Create New Customer Option - Show only if search has no results or explicitly requested */}
+                                    {(!customerFound && searchQuery.length > 0 && searchResults.length === 0 && !isSearching) && !showCreateForm && (
+                                        <div className="text-center pt-2">
+                                            <p className="text-xs text-red-500 mb-1">Customer not found?</p>
+                                            <button onClick={() => {
+                                                // Smart pre-fill: if search looks like phone (digits only), fill phone; otherwise fill name
+                                                const isPhone = /^\d+$/.test(searchQuery.trim());
+                                                if (isPhone) {
+                                                    setNewCustomerPhone(searchQuery.trim());
+                                                    setNewCustomerName('');
+                                                } else {
+                                                    setNewCustomerName(searchQuery.trim());
+                                                    setNewCustomerPhone('');
+                                                }
+                                                setShowCreateForm(true);
+                                            }} className="text-xs text-blue-600 font-bold hover:underline flex items-center justify-center gap-1 w-full">
+                                                <UserPlus className="w-3 h-3" /> Add New Customer
+                                            </button>
+                                        </div>
                                     )}
+
                                     {showCreateForm && (
-                                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                                            <input type="text" value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Customer Name" className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" />
-                                            <div className="flex gap-2">
-                                                <button onClick={handleCreateAccount} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex-1 hover:bg-blue-700">Create Account</button>
-                                                <button onClick={() => setShowCreateForm(false)} className="px-3 py-1.5 rounded-lg text-xs font-medium border hover:bg-gray-50">Cancel</button>
+                                        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 p-3 bg-gray-50 rounded-lg border">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="text-xs font-bold text-gray-700">New Customer</h4>
+                                                <button onClick={() => setShowCreateForm(false)}><X className="w-3 h-3 text-gray-400" /></button>
                                             </div>
+                                            <input 
+                                                type="text" 
+                                                value={newCustomerName} 
+                                                onChange={(e) => setNewCustomerName(e.target.value)} 
+                                                placeholder="Full Name" 
+                                                className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" 
+                                            />
+                                            <div className="relative">
+                                                <input 
+                                                    type="tel" 
+                                                    value={newCustomerPhone} 
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                        setNewCustomerPhone(val);
+                                                    }} 
+                                                    placeholder="Mobile Number (10 digits)" 
+                                                    className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" 
+                                                />
+                                                {newCustomerPhone.length === 10 && (
+                                                    <CheckCircle className="absolute right-3 top-2.5 w-4 h-4 text-green-500" />
+                                                )}
+                                            </div>
+                                            <button 
+                                                onClick={handleCreateAccount} 
+                                                disabled={newCustomerPhone.length !== 10 || !newCustomerName}
+                                                className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                Create Account
+                                            </button>
                                         </div>
                                     )}
                                 </div>

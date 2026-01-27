@@ -56,7 +56,7 @@ export const CreditSearch: React.FC<CreditSearchProps> = ({ onSelectCustomer }) 
                     <span className="text-sm">
                       Credit: <span className="font-semibold text-red-600">Rs. {customer.totalCredit}</span>
                       {' / '}
-                      <span className="text-gray-600">Limit: Rs. {customer.creditLimit}</span>
+                      <span className="text-gray-600">Limit: Rs. {customer.creditLimit ?? 0}</span>
                     </span>
                   </div>
                 </div>
@@ -68,7 +68,7 @@ export const CreditSearch: React.FC<CreditSearchProps> = ({ onSelectCustomer }) 
               </div>
 
               {/* Warning if near limit */}
-              {customer.totalCredit >= customer.creditLimit * 0.8 && (
+              {customer.totalCredit >= (customer.creditLimit ?? 0) * 0.8 && (
                 <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg p-2 flex items-center gap-2 text-xs text-yellow-800">
                   <AlertCircle className="w-4 h-4" />
                   <span>Near credit limit</span>
@@ -104,7 +104,7 @@ export const CreditSearch: React.FC<CreditSearchProps> = ({ onSelectCustomer }) 
           <p className="text-lg font-bold text-gray-900">{selectedCustomer.name}</p>
           <div className="mt-2 space-y-1 text-sm">
             <p className="text-gray-600">Current Credit: <span className="font-bold text-red-600">Rs. {selectedCustomer.totalCredit}</span></p>
-            <p className="text-gray-600">Available: <span className="font-bold text-green-600">Rs. {selectedCustomer.creditLimit - selectedCustomer.totalCredit}</span></p>
+            <p className="text-gray-600">Available: <span className="font-bold text-green-600">Rs. {(selectedCustomer.creditLimit ?? 0) - selectedCustomer.totalCredit}</span></p>
           </div>
         </div>
       )}

@@ -19,8 +19,8 @@ const ExportPrintSingleOrder: React.FC<Props> = ({ order }) => {
           order.status,
           item.name,
           item.quantity,
-          item.price,
-          item.price * item.quantity
+          item.menuItem.price,
+          item.menuItem.price * item.quantity
         ])
       : [[order.id, order.tableNumber, order.customerName, order.status, "", "", "", order.totalAmount]];
 
@@ -73,8 +73,8 @@ const ExportPrintSingleOrder: React.FC<Props> = ({ order }) => {
                   <tr>
                     <td>${item.name}</td>
                     <td>${item.quantity}</td>
-                    <td>${item.price}</td>
-                    <td>${item.quantity * item.price}</td>
+                    <td>${item.menuItem.price}</td>
+                    <td>${item.quantity * item.menuItem.price}</td>
                   </tr>`).join("")
                 : `<tr>
                      <td colspan="4">${order.totalAmount}</td>
