@@ -25,7 +25,7 @@ export const OrderTracking: React.FC = () => {
 
   // Use 'dummyOrder' if nothing found for getOrderById, to avoid lint/type errors
   const [order, setOrder] = useState<any>(null);
-  const [notifications, setNotifications] = useState<string[]>([]);
+  const [notifications] = useState<string[]>([]);
 
   useEffect(() => {
     if (orderId) {
